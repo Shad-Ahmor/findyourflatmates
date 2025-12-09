@@ -1,4 +1,4 @@
-// src/components/BasicDetailStepperForm.web.jsx
+// src/components/BasicDetailForm.web.jsx
 
 import React, { useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
@@ -21,7 +21,7 @@ const BASE_ACTION_BUTTON_WEB_STYLES = Platform.select({
  * This component collects City, Phone Number, and User Intent (Primary/Secondary).
  * Submission calls the handleCompleteProfile API handler passed from the parent.
  */
-const BasicDetailStepperForm = (props) => {
+const BasicDetailForm = (props) => {
     const { 
         city, setCity, countryCode, setCountryCode, phoneNumber, setPhoneNumber,
         primaryIntent, setPrimaryIntent, secondaryIntent, setSecondaryIntent,
@@ -188,4 +188,4 @@ const BasicDetailStepperForm = (props) => {
     );
 };
 
-export default BasicDetailStepperForm;
+export default BasicDetailForm;

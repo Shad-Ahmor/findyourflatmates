@@ -12,21 +12,21 @@ const heroImage = require('../../../assets/hero_slide_1.jpg');
 
 const { width, height } = Dimensions.get('window');
 const BREAKPOINT = 768;
-const MAX_WEB_WIDTH = 1400; // Fixed maximum width for better centering control
+const MAX_WEB_WIDTH = '98vw'; // Fixed maximum width for better centering control
 const HORIZONTAL_MARGIN = 15; // Margin to keep it off the edge
 
 // -----------------------------------------------------------------
 // 🎨 ENHANCED MAGICAL 3D STYLES & CONSTANTS
 // -----------------------------------------------------------------
-const BASE_SHADOW_COLOR = '#102A43'; 
-const VIBRANT_ACCENT = '#FFD700'; // Gold/Yellow
+const BASE_SHADOW_COLOR = '#606264ff'; 
+const VIBRANT_ACCENT = '#e9e5ffff'; // Gold/Yellow
 const PRIMARY_COLOR = '#4682B4'; 
 
 const DEEP_3D_SHADOW = {
-    boxShadow: `0 40px 80px 0px rgba(16, 42, 67, 0.5), 0 0 25px 0px ${VIBRANT_ACCENT}40`, 
+    boxShadow: `0 40px 80px 0px rgba(16, 42, 67, 0.1), 0 0 25px 0px ${VIBRANT_ACCENT}40`, 
     shadowColor: BASE_SHADOW_COLOR, 
     shadowOffset: { width: 0, height: 40 }, 
-    shadowOpacity: 0.5, 
+    shadowOpacity: 0.1, 
     shadowRadius: 80, 
     elevation: 40,
 };
@@ -307,16 +307,15 @@ navigation.navigate('Login');
                         backgroundColor: colors.card, 
                         ...DEEP_3D_SHADOW, 
                         ...FLOATING_HEADER_STYLE,
-                        width: Math.min(width - HORIZONTAL_MARGIN * 2, MAX_WEB_WIDTH), 
                     }
                 ]}
             >
                 <Text style={[styles.headerTitle, { color: colors.primary }]}>Find Your FlatMates</Text>
                 <TouchableOpacity
-                    style={[styles.loginButton, { backgroundColor: VIBRANT_ACCENT, ...SUBTLE_SHADOW }]}
+                    style={[styles.loginButton, { backgroundColor: colors.primary , ...SUBTLE_SHADOW }]}
                     onPress={handleLogin} 
                 >
-                    <Icon name="log-in-outline" size={24} color={BASE_SHADOW_COLOR} /> 
+                    <Icon name="log-in-outline" size={24} color={VIBRANT_ACCENT} /> 
                 </TouchableOpacity>
             </View>
             
@@ -337,12 +336,7 @@ navigation.navigate('Login');
                     <View style={[styles.heroContent, { transform: [{ translateZ: 50 }] }]}>
                         <Text style={[styles.heroTextTitle, { color: VIBRANT_ACCENT }]}>Find Your Flatmate</Text>
                         <Text style={[styles.heroTextSubtitle, { color: colors.card }]}>Verified homes and magic matches await you.</Text>
-                        <TouchableOpacity 
-                            style={[styles.heroButton, { backgroundColor: VIBRANT_ACCENT, ...SUBTLE_SHADOW }]}
-                            onPress={() => alert("Start Your Quest")}
-                        >
-                            <Text style={[styles.heroButtonText, { color: BASE_SHADOW_COLOR }]}>Start Your Quest</Text>
-                        </TouchableOpacity>
+                     
                     </View>
                 </View>
           
@@ -789,15 +783,7 @@ const styles = StyleSheet.create({
         marginBottom: 30,
         textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
     },
-    heroButton: {
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: BUTTON_RADIUS,
-    },
-    heroButtonText: {
-        fontSize: 20,
-        fontWeight: '800',
-    },
+
     
     // --- Explore Categories Styles ---
     categoryGrid: {
