@@ -36,7 +36,7 @@ export const ThemeProvider = ({ children }) => {
   const lightColors = {
     mode: 'light',
     // VIBRANT COLORS
-    primary: '#1e90ff', // Striking Red-Pink (Main CTA, Active State)
+    primary: '#FF3366', // Striking Red-Pink (Main CTA, Active State)
     secondary: '#00C4CC', // Cyan/Teal (Secondary Action)
     accent: '#FFC700', // Gold/Yellow Accent (Stars, Warnings)
     success: '#34C759', 
