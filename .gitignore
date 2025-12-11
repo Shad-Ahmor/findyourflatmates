@@ -1,41 +1,36 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Dependencies
+/node_modules
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
 
-# dependencies
-node_modules/
+# Expo / React Native
+/.expo
+/.expo-shared
+/web-build
+/app.json.orig
+/temp/
 
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+# Environment Variables (CRITICAL for security)
+.env
+.env.production
+.env.development
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+# Build Artifacts
+/dist       # <--- आपका Web build folder (यह फ़ोल्डर GitHub से डिलीट हो जाएगा)
+/build
 
-# Metro
-.metro-health-check*
+# Native Projects (Ignore unless you are doing custom native work)
+/android/build
+/android/app/build
+/ios/build
+/ios/Pods/
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# NativeWind/Tailwind Cache
+/.nativewind
+/global.css # यदि यह स्वचालित रूप से उत्पन्न होता है
 
-# macOS
+# Editors / OS Cache
+.vscode/
+.idea/
 .DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
-*.tsbuildinfo
-
-# generated native folders
-/ios
-/android
