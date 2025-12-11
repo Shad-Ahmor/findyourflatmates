@@ -6,7 +6,7 @@ import {
 } from 'react-native'; 
 import { useTheme } from '../../theme/theme.js'; 
 import Icon from 'react-native-vector-icons/Ionicons'; 
-const heroImage = require('../../../assets/hero_slide_1.jpg'); 
+const heroImage = require('../../../assets/hero_slide1.png'); 
 
 const { width } = Dimensions.get('window');
 

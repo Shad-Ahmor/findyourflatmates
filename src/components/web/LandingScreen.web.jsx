@@ -8,7 +8,7 @@ import { useTheme } from '../../theme/theme.js';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 
 // NOTE: Ensure this image path is correct, or use a placeholder URL
-const heroImage = require('../../../assets/hero_slide_1.jpg'); 
+const heroImage = require('../../../assets/hero_slide1.png'); 
 
 const { width, height } = Dimensions.get('window');
 const BREAKPOINT = 768;
@@ -334,7 +334,7 @@ navigation.navigate('Login');
                     
                     {/* 🌟 3D Layered Content */}
                     <View style={[styles.heroContent, { transform: [{ translateZ: 50 }] }]}>
-                        <Text style={[styles.heroTextTitle, { color: VIBRANT_ACCENT }]}>Find Your Flatmate</Text>
+                        <Text style={[styles.heroTextTitle, { color: colors.primary }]}>Find Your Flatmate</Text>
                         <Text style={[styles.heroTextSubtitle, { color: colors.card }]}>Verified homes and magic matches await you.</Text>
                      
                     </View>
@@ -347,7 +347,7 @@ navigation.navigate('Login');
                     ref={categoryRef} 
                     onLayout={() => measureSection('category', categoryRef)}
                 > 
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>🏰 Explore Property Categories</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.primary }]}>🏰 Explore Property Categories</Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Find your perfect living space: Flats, PGs, Hostels, and Houses.</Text>
                     
                     <View style={styles.categoryGrid}> 
@@ -416,7 +416,7 @@ navigation.navigate('Login');
                     ref={howItWorksRef} 
                     onLayout={() => measureSection('howItWorks', howItWorksRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: VIBRANT_ACCENT }]}>🪄 How It Works: Your Fairy Tale Journey</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.primary }]}>🪄 How It Works: Your Fairy Tale Journey</Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Find your perfect home in four simple steps.</Text>
                     
                     <View style={styles.howItWorksGrid}> 
@@ -483,7 +483,7 @@ navigation.navigate('Login');
                     ref={communityRef} 
                     onLayout={() => measureSection('community', communityRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>💖 Our Community Vibe</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.primary}]}>💖 Our Community Vibe</Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>More than just a place to live, it's a supportive community.</Text>
                     
                     <View style={styles.communityGrid}> 
@@ -515,7 +515,7 @@ navigation.navigate('Login');
                     ref={testimonialRef} 
                     onLayout={() => measureSection('testimonial', testimonialRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>💬 Hear From Our Happy Renters</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.primary }]}>💬 Hear From Our Happy Renters</Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.text + '80', marginBottom: 40 }]}>Real stories from the community in a chat view.</Text>
                     
                     <View style={styles.testimonialGrid}> 
@@ -591,7 +591,7 @@ navigation.navigate('Login');
                     ref={neighborhoodsRef} 
                     onLayout={() => measureSection('neighborhoods', neighborhoodsRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>🗺️ Featured Neighborhoods</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.primary }]}>🗺️ Featured Neighborhoods</Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.text + '80', marginBottom: 40 }]}>Discover the most magical and sought-after localities.</Text>
                     
                     <View style={styles.neighborhoodGrid}> 
@@ -628,7 +628,7 @@ navigation.navigate('Login');
                     ref={previewRef} 
                     onLayout={() => measureSection('preview', previewRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>🔮 Sneak Peek: Future Features</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.primary}]}>🔮 Sneak Peek: Future Features</Text>
                     <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Building the future of shared living, one magical feature at a time.</Text>
                     
                     <View style={styles.previewGrid}> 

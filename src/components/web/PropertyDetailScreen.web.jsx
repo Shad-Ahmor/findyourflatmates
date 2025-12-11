@@ -19,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/theme'; 
-
+import { API_BASE_URL } from '@env'; 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // -----------------------------------------------------------------
@@ -51,7 +51,9 @@ const IMAGE_HEIGHT = ITEM_WIDTH * IMAGE_ASPECT_RATIO;
 // -----------------------------------------------------------------
 // 🚨 CONFIGURATION: API Endpoint 
 // -----------------------------------------------------------------
-const SINGLE_LISTING_ENDPOINT = `http://localhost:5000/flatmate/listing`; 
+
+const BASE_API_URL = API_BASE_URL; // ⬅️ .env से प्राप्त BASE URL का उपयोग करें
+const SINGLE_LISTING_ENDPOINT = `${BASE_API_URL}/flatmate/listing`;
 // -----------------------------------------------------------------
 
 // --- DUMMY LINKING API (To simulate opening Google Maps) ---

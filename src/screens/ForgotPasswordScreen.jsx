@@ -18,6 +18,7 @@ import * as Animatable from "react-native-animatable";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import axios from "axios";
+import { API_BASE_URL } from '@env'; 
 
 const { width } = Dimensions.get("window");
 const BREAKPOINT = 768;
@@ -50,7 +51,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/flatmate/forgot-password",
+        `${API_BASE_URL}/flatmate/forgot-password`,
         { email }
       );
 

@@ -1,0 +1,31 @@
+// metro.config.js (Simplified and Robust)
+
+const { getDefaultConfig } = require('expo/metro-config');
+const { mergeConfig } = require('@react-native/metro-config');
+const { withNativeWind } = require('nativewind/metro');
+
+module.exports = (async () => {
+  // 1. बेस कॉन्फ़िग प्राप्त करें (async)
+  const baseConfig = await getDefaultConfig(__dirname);
+  
+  // 2. NativeWind को लागू करें
+  const nativeWindConfig = withNativeWind(baseConfig, { input: "./global.css" });
+  
+  // 3. SVG/Assets के लिए आवश्यक परिवर्तक और एक्सटेंशन जोड़ें
+  const { resolver } = nativeWindConfig;
+  
+  return mergeConfig(nativeWindConfig, {
+    transformer: {
+      babelTransformerPath: require.resolve('react-native-svg-transformer'),
+    },
+    resolver: {
+      // PNGs, SVGs, और Fonts को assetExts से हटाएँ और sourceExts में जोड़ें
+      assetExts: resolver.assetExts.filter((ext) => 
+        !['svg', 'png', 'ttf', 'otf'].includes(ext)
+      ),
+      sourceExts: [...resolver.sourceExts, 'svg', 'ttf', 'otf'],
+      
+      // पुराने extraNodeModules को यहाँ शामिल न करें
+    },
+  });
+})();

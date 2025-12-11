@@ -10,6 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 // Shadow-2 is often tricky with dynamic styles, using standard RN styles now
 import { Shadow } from 'react-native-shadow-2'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
+import { API_BASE_URL } from '@env'; 
 // ✅ THEME IMPORT
 import { useTheme } from '../../theme/theme'; 
 
@@ -17,7 +18,6 @@ const { width } = Dimensions.get('window');
 const BREAKPOINT = 768; 
 
 // SIMULATED CONFIG
-const API_BASE_URL = 'http://localhost:5000'; 
 const SIGNUP_URL = `${API_BASE_URL}/flatmate/signup`;
 const SEND_OTP_URL = `${API_BASE_URL}/flatmate/send-otp`; 
 const VERIFY_OTP_URL = `${API_BASE_URL}/flatmate/verify-otp`; 

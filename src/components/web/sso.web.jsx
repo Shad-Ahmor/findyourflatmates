@@ -5,11 +5,13 @@ import React ,{useEffect} from 'react';
 import { View, Text, TouchableOpacity, Alert, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '@env'; 
+
 // 💡 CONFIGURATION: Replace these with your actual values
 // ये मान Google Cloud Console से प्राप्त किए जाते हैं।
 const GOOGLE_CLIENT_ID = '552140941028-lkca62ailmg589thr8u8kniis6fmiglt.apps.googleusercontent.com';
-const GOOGLE_REDIRECT_URI="http://localhost:5000/flatmate/google/callback"
-const BACKEND_ORIGIN = 'http://localhost:5000'; // सिक्योरिटी चेक के लिए बैकएंड URL
+const GOOGLE_REDIRECT_URI=`${API_BASE_URL}/flatmate/google/callback`
+const BACKEND_ORIGIN = `${API_BASE_URL}`; // सिक्योरिटी चेक के लिए बैकएंड URL
 
 const SSOButtons = ({ isLoading, styles, colors, SUBTLE_SHADOW, navigation }) => {
     

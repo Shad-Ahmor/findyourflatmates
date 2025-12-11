@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../theme/theme'; 
+import { API_BASE_URL } from '@env'; 
 // Recaptcha कंपोनेंट अब इस्तेमाल नहीं हो रहा
 
 // 🎯 OLD IMPORT REMOVED: import BasicDetailForm from './BasicDetailForm.web.jsx'; 
@@ -29,7 +30,6 @@ import useRecaptcha, { RecaptchaContainer } from './captcha.web.jsx';
 
 const { width } = Dimensions.get('window');
 const BREAKPOINT = 768; 
-const API_BASE_URL = 'http://localhost:5000'; 
 const LOGIN_URL = `${API_BASE_URL}/flatmate/login`; 
 // 🎯 PROFILE_COMPLETE_URL REMOVED
 

@@ -15,11 +15,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../theme/theme'; 
-
+import { API_BASE_URL } from '@env'; 
 // -----------------------------------------------------------------
 // 🚨 CONFIGURATION: API Endpoint
 // -----------------------------------------------------------------
-const ALL_LISTINGS_ENDPOINT = `http://localhost:5000/flatmate/listing/all`; 
+const BASE_API_URL = API_BASE_URL;
+
+const ALL_LISTINGS_ENDPOINT = `${BASE_API_URL}/flatmate/listing/all`; 
 const BREAKPOINT = 768; 
 
 // -----------------------------------------------------------------

@@ -15,9 +15,9 @@ const BREAKPOINT = 768;
 
 // Hero Slider Images
 const heroImages = [
- require('../../../assets/hero_slide_2.jpg'),
- require('../../../assets/hero_slide_2.jpg'),
- require('../../../assets/hero_slide_3.jpg'),
+ require('../../../assets/hero_slide1.png'),
+ require('../../../assets/hero_slide_2.png'),
+ require('../../../assets/hero_slide_3.png'),
 ];
 
 // Navigation options

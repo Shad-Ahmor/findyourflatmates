@@ -19,9 +19,9 @@ const BUTTON_RADIUS = 20;
 
 // Hero Slider Images (Path is relative to the file)
 const heroImages = [
- require('../../../assets/hero_slide_1.jpg'),
- require('../../../assets/hero_slide_2.jpg'),
- require('../../../assets/hero_slide_3.jpg'),
+ require('../../../assets/hero_slide1.png'),
+ require('../../../assets/hero_slide_2.png'),
+ require('../../../assets/hero_slide_3.png'),
 ];
 
 

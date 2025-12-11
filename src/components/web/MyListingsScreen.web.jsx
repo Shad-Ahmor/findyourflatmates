@@ -18,7 +18,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { Shadow } from 'react-native-shadow-2'; // Shadow is crucial for 3D look
 import ListingFormScreen from './ListingFormScreen.web.jsx'; 
-
+import { API_BASE_URL } from '@env'; 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // -----------------------------------------------------------------
@@ -40,8 +40,8 @@ const CARD_WIDTH = 380;
 // -----------------------------------------------------------------
 // 🚨 CONFIGURATION: API Endpoints
 // -----------------------------------------------------------------
-const MY_LISTINGS_ENDPOINT = `http://localhost:5000/flatmate/listing/my-listings`; 
-const BASE_LISTING_ENDPOINT = `http://localhost:5000/flatmate/listing`; 
+const MY_LISTINGS_ENDPOINT = `${API_BASE_URL}/flatmate/listing/my-listings`; 
+const BASE_LISTING_ENDPOINT = `${API_BASE_URL}/flatmate/listing`; 
 // -----------------------------------------------------------------
 
 // =================================================================

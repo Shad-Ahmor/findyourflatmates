@@ -30,9 +30,9 @@ const Linking = {
 
 // --- ASSET IMPORTS (Placeholder images) ---
 const heroImages = {
-    slide1: require('../../assets/hero_slide_1.jpg'),
-    slide2: require('../../assets/hero_slide_2.jpg'),
-    slide3: require('../../assets/hero_slide_3.jpg'),
+    slide1: require('../../assets/hero_slide1.png'),
+    slide2: require('../../assets/hero_slide_2.png'),
+    slide3: require('../../assets/hero_slide_3.png'),
 };
 // --- END ASSET IMPORTS ---
 

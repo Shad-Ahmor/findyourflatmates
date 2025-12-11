@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { useTheme } from '../../theme/theme'; 
-
+import { API_BASE_URL } from '@env'; // ⬅️ .env से इम्पोर्ट करें
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -28,7 +28,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 // -----------------------------------------------------------------
 // 🚨 CONFIGURATION: API Endpoint (Replace with your actual server URL)
 // -----------------------------------------------------------------
-const LISTING_ENDPOINT = `http://localhost:5000/flatmate/listing`; 
+const BASE_API_URL = API_BASE_URL;
+const LISTING_ENDPOINT = `${BASE_API_URL}/flatmate/listing`; 
 // -----------------------------------------------------------------
 
 // -----------------------------------------------------------------
