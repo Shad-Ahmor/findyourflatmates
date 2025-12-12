@@ -647,10 +647,11 @@ const SignupScreen = ({ navigation }) => {
                                 padding: 50, 
                                 justifyContent: 'center',
                                 borderRadius: GENEROUS_RADIUS, // Ensure rounded corners are consistent
+                                textAlign:'center'
                             }]}>
-                                <Icon name="home-outline" size={90} color={colors.accent} style={{ marginBottom: 15 }} />
-                                <Text style={[styles.logoText, { color: colors.card, fontSize: 40 }]}>FlatMate Finder</Text>
-                                <Text style={[styles.tagline, { color: colors.backgroundLight, fontSize: 18, marginTop: 15 }]}>
+                                <Icon name="home-outline" size={90} color={colors.card} style={{ marginBottom: 15 ,textAlign:'center'}} />
+                                <Text style={[styles.logoText, { color: colors.card, fontSize: 40 , textAlign:'center'}]}>Find Your Flatmate</Text>
+                                <Text style={[styles.tagline, { color: colors.backgroundLight, fontSize: 18, marginTop: 15,textAlign:'center' }]}>
                                     Quick, Secure, and Verified Sign-up. Your home search starts now.
                                 </Text>
                             </View>
@@ -671,7 +672,7 @@ const SignupScreen = ({ navigation }) => {
                         <View style={styles.mobileFullScreenContainer}>
                             <View style={styles.mobileHeroSection}>
                                 <Icon name="home-outline" size={60} color={colors.primary} style={{ marginBottom: 10 }} />
-                                <Text style={[styles.logoText, { color: colors.text }]}>FlatMate Finder</Text>
+                                <Text style={[styles.logoText, { color: colors.text }]}>Find Your Flatmate</Text>
                             </View>
                             
                             <View style={[styles.mobileFormContainer, SUBTLE_SHADOW, { padding: 25, borderRadius: GENEROUS_RADIUS, backgroundColor: colors.card }]}>

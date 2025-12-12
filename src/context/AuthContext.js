@@ -1,4 +1,7 @@
+// src/context/AuthContext.js
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '@env'; 
 
 const AuthContext = createContext();
 
@@ -7,38 +10,45 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // ✅ Check session cookie on app start
-    const checkSession = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/flatmate/me', {
-          method: 'GET',
-          credentials: 'include', // cookie send
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
+    // 💡 FIX: Replaced API call with Local Storage check for persistence.
+    // WARNING: This is less secure than using HTTP-only cookies validated by a server API.
+    
+    const checkLocalSession = () => {
+        try {
+            const storedUser = localStorage.getItem('user_session_flatmate');
+            if (storedUser) {
+                // Parse user data from local storage
+                setUser(JSON.parse(storedUser)); 
+            }
+        } catch (e) {
+            console.error('Error reading session from local storage:', e);
+            localStorage.removeItem('user_session_flatmate'); // Clear bad data
+        } finally {
+            setIsLoading(false);
         }
-      } catch (e) {
-        console.error('Check session error:', e);
-      } finally {
-        setIsLoading(false);
-      }
     };
-    checkSession();
+    checkLocalSession();
   }, []);
 
   const login = async (sessionData) => {
-    setUser(sessionData); // server cookie already set
+    // 💡 FIX: Store user data in local storage upon successful login
+    setUser(sessionData); 
+    localStorage.setItem('user_session_flatmate', JSON.stringify(sessionData));
   };
 
   const logout = async () => {
     try {
-      await fetch('http://localhost:5000/flatmate/logout', {
+      // Server-side logout (to clear cookie/session on server)
+      await fetch(`${API_BASE_URL}/flatmate/logout`, {
         method: 'POST',
         credentials: 'include',
       });
-    } catch (e) {}
+    } catch (e) {
+        console.error('Logout error:', e);
+    }
+    // 💡 FIX: Clear client-side state
     setUser(null);
+    localStorage.removeItem('user_session_flatmate');
   };
 
   return (

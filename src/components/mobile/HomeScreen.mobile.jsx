@@ -5,7 +5,7 @@ import {
  SafeAreaView, ScrollView, View, Text, Image, Dimensions, Alert, Modal, FlatList, TouchableOpacity, StyleSheet
 } from 'react-native';
 import { useTheme } from '../../theme/theme.js';
-import PropertyListing from './PropertyListing.android.jsx';
+import PropertyListing from './PropertyListing.mobile.jsx';
 import MobFilterBar from './MobFilterBar.jsx';
 import WebFilterBar from '../web/WebFilterBar.jsx';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -15,9 +15,9 @@ const BREAKPOINT = 768;
 
 // Hero Slider Images
 const heroImages = [
- require('../../../assets/hero_slide1.png'),
- require('../../../assets/hero_slide_2.png'),
- require('../../../assets/hero_slide_3.png'),
+//  require('../../../assets/hero_slide1.png'),
+//  require('../../../assets/hero_slide_2.png'),
+//  require('../../../assets/hero_slide_3.png'),
 ];
 
 // Navigation options

@@ -7,13 +7,13 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { Shadow } from 'react-native-shadow-2'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
+import { API_BASE_URL } from '@env'; 
 
 // --- Import Split Components ---
-import SignupStepperScreen from './SignupStepperScreen.android.jsx'; 
+import SignupStepperScreen from './SignupStepperScreen.mobile.jsx'; 
 import BasicDetailStepperForm from './BasicDetailStepperForm.android.jsx'; 
 
 // SIMULATED CONFIG
-const API_BASE_URL = 'http://localhost:5000'; 
 const SIGNUP_URL = `${API_BASE_URL}/flatmate/signup`;
 const COMPLETE_PROFILE_URL = `${API_BASE_URL}/flatmate/complete-profile`; 
 

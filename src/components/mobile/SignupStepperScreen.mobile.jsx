@@ -4,7 +4,6 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 
-// CONSTANTS (Required for style and button color)
 const PRIMARY_COLOR = '#007AFF'; // Blue
 const ACCENT_COLOR = '#FF9500'; // Orange
 const ERROR_COLOR = '#FF3B30'; // Red

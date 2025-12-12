@@ -48,8 +48,8 @@ export const ThemeProvider = ({ children }) => {
     backgroundLight: '#FFFFFF', // For floating/sticky elements
     
     // TYPOGRAPHY & BORDERS
-    text: '#898787ff',
-    textSecondary: '#ddddddff',
+    text: '#898787',      // ✅ FIXED: Removed 'ff'
+    textSecondary: '#dddddd', // ✅ FIXED: Removed 'ff'
     border: '#E0E0E0', 
   };
   

@@ -8,11 +8,11 @@ import { useTheme } from '../../theme/theme.js';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 // NOTE: Ensure this image path is correct, or use a placeholder URL
-const heroImage = require('../../../assets/hero_slide1.png');
+import heroImage from '../../../assets/hero_slide1.png';;
 // 🌟 NEW LOGO IMPORT
-const appLogo = require('../../../assets/findyourflatmates.png');
+import appLogo  from '../../../assets/findyourflatmates.png';
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window'); // Keeping this for static styles that reference width (e.g. hero, header)
 const BREAKPOINT = 768;
 const MAX_WEB_WIDTH = '98vw'; // Fixed maximum width for better centering control
 const HORIZONTAL_MARGIN = 15; // Margin to keep it off the edge
@@ -113,6 +113,50 @@ const communityVibes = [
 const LandingScreen = ({ navigation }) => {
     const { colors } = useTheme();
 
+    // 🌟 DYNAMIC WIDTH IMPLEMENTATION (as requested by user)
+    const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
+    const dynamicWidth = windowDimensions.width;
+    const dynamicHeight = windowDimensions.height;
+    const isMobile = dynamicWidth <= BREAKPOINT;
+    
+    useEffect(() => {
+        const updateDimensions = ({ window }) => {
+            setWindowDimensions(window);
+        };
+
+        const subscription = Dimensions.addEventListener('change', updateDimensions);
+
+        // Clean up the listener when the component is unmounted
+        return () => subscription?.remove();
+    }, []);
+
+    // ----------------------------------------------------
+    // 🪄 DYNAMIC CARD WIDTH LOGIC FUNCTION
+    // ----------------------------------------------------
+    // Calculates width based on desired cards per row.
+    const getCardWidth = useCallback((webCards) => {
+        const mobileCards = 2; // Always show 2 cards on mobile
+
+        if (dynamicWidth > BREAKPOINT) {
+            // Web: 4 cards -> 23%, 3 cards -> 31%
+            // Subtract 2% for margin/spacing
+            return `${(100 / webCards) - 2}%`; 
+        } else {
+            // Mobile: Always 2 cards -> 46%
+            // Subtract 4% for margin/spacing (46% ensures 4% space between two cards + margins)
+            return `${(100 / mobileCards) - 4}%`;
+        }
+    }, [dynamicWidth]);
+
+    // ----------------------------------------------------
+    // 🪄 DYNAMIC SIZE HELPER FUNCTION (NEW)
+    // ----------------------------------------------------
+    // Returns a size value based on screen size.
+    const getDynamicSize = useCallback((webSize, mobileSize) => {
+        return isMobile ? mobileSize : webSize;
+    }, [isMobile]);
+
+
     const [propertyType, setPropertyType] = useState('Flat');
     const [scrollY, setScrollY] = useState(0);
     const sectionRefs = useRef({});
@@ -166,6 +210,7 @@ const LandingScreen = ({ navigation }) => {
 
     const measureSection = useCallback((sectionName, viewRef) => {
         if (viewRef && viewRef.current) {
+            // NOTE: Using dynamicHeight here
             viewRef.current.measure((x, y, width, height, pageX, pageY) => {
                 sectionRefs.current[sectionName] = {
                     y: pageY,
@@ -179,7 +224,7 @@ const LandingScreen = ({ navigation }) => {
     const handleScroll = useCallback((event) => {
         const currentScrollY = event.nativeEvent.contentOffset.y;
         setScrollY(currentScrollY);
-        const viewportHeight = height;
+        const viewportHeight = dynamicHeight; // Using dynamicHeight
 
         const newInView = { ...inView };
         let updated = false;
@@ -197,7 +242,7 @@ const LandingScreen = ({ navigation }) => {
         if (updated) {
             setInView(newInView);
         }
-    }, [inView]);
+    }, [inView, dynamicHeight]);
 
     const heroImageParallax = {
         transform: [
@@ -255,29 +300,14 @@ const LandingScreen = ({ navigation }) => {
     // ⬇️ RENDERED COMPONENTS ⬇️
     // ----------------------------------------------------
 
-    const Footer = () => (
+const Footer = () => (
         <View style={[styles.footerContainer, { backgroundColor: colors.card + 'e0', borderTopColor: colors.border }]}>
+
+            {/* 1. Branding and Social (MOVED OUTSIDE footerContent) */}
+     
             <View style={styles.footerContent}>
 
-                {/* 1. Branding and Social */}
-                <View style={styles.footerSection}>
-                    {/* 🌟 LOGO IMAGE REPLACEMENT FOR FOOTER */}
-                    <Image
-                        source={appLogo}
-                        style={styles.footerLogo}
-                        resizeMode="contain"
-                    />
-                    <Text style={[styles.footerSubtitle, { color: colors.text + '80' }]}>
-                        Find your next home and companion. Where magic meets matching.
-                    </Text>
-                    <View style={styles.socialIcons}>
-                        <Icon name="logo-facebook" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
-                        <Icon name="logo-instagram" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
-                        <Icon name="logo-linkedin" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
-                    </View>
-                </View>
-
-                {/* 2. Quick Links */}
+                {/* 2. Quick Links (Now first column) */}
                 <View style={styles.footerSection}>
                     <Text style={[styles.footerHeading, { color: colors.text }]}>Quick Links</Text>
                     {['Browse Listings', 'Post Property', 'Find Flatmate', 'Neighborhoods'].map((item, index) => (
@@ -303,14 +333,22 @@ const LandingScreen = ({ navigation }) => {
             </View>
 
             <View style={[styles.footerDivider, { backgroundColor: colors.border }]} />
-
-            <Text style={[styles.footerCopyright, { color: colors.text + '60' }]}>
+       <View style={[styles.footerBrandingHeader, { maxWidth: MAX_WEB_WIDTH }]}>
+             
+                 <Text style={[styles.footerCopyright, { color: colors.text + '60' }]}>
                 © {new Date().getFullYear()} GDLSofts. All rights reserved. Built with magic.
             </Text>
+                <View style={styles.socialIcons}>
+                    <Icon name="logo-facebook" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
+                    <Icon name="logo-instagram" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
+                    <Icon name="logo-linkedin" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
+                </View>
+                  
+            </View>
+            
+         
         </View>
     );
-
-
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
 
@@ -332,23 +370,35 @@ const LandingScreen = ({ navigation }) => {
                         style={styles.headerLogo}
                         resizeMode="contain"
                     />
-                    <Text style={[styles.headerTitle, { color: PRIMARY_COLOR }]}>FlatMates</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.headerTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(28, 20) }]}>FlatMates</Text>
                 </View>
                 <TouchableOpacity
                     style={[styles.loginButton, { backgroundColor: PRIMARY_COLOR, ...SUBTLE_SHADOW }]}
                     onPress={handleLogin}
                 >
-                    <Icon name="log-in-outline" size={24} color={VIBRANT_ACCENT} />
+                    {/* DYNAMIC ICON SIZE */}
+                    <Icon name="log-in-outline" size={getDynamicSize(24, 20)} color={VIBRANT_ACCENT} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
-                contentContainerStyle={[styles.scrollContentWeb, { maxWidth: MAX_WEB_WIDTH + HORIZONTAL_MARGIN * 2, backgroundColor: colors.background }]}
+                // NOTE: Using static width here as it's outside the scrolling content area
+                contentContainerStyle={[styles.scrollContentWeb, { maxWidth: MAX_WEB_WIDTH + HORIZONTAL_MARGIN * 2, backgroundColor: colors.background }]} 
             >
                 {/* 🏰 SECTION 1: HERO (3D LAYERED WITH PARALLAX) */}
-                <View style={[styles.heroContainer, { backgroundColor: PRIMARY_COLOR + '15', ...DEEP_3D_SHADOW }]}>
+                <View 
+                    style={[
+                        styles.heroContainer, 
+                        { 
+                            backgroundColor: PRIMARY_COLOR + '15', 
+                            ...DEEP_3D_SHADOW,
+                            height: getDynamicSize('65vh', '50vh')
+                        }
+                    ]}
+                >
                     <Image
                         source={heroImage}
                         style={[styles.heroImage, heroImageParallax]}
@@ -357,13 +407,20 @@ const LandingScreen = ({ navigation }) => {
 
                     {/* 🌟 3D Layered Content */}
                     <View style={[styles.heroContent, { transform: [{ translateZ: 50 }] }]}>
-                        <Text style={[styles.heroTextTitle, { color: VIBRANT_ACCENT }]}>Find Your <Text style={{ color: PRIMARY_COLOR }}>Magical</Text> Flatmates</Text>
-                        <Text style={[styles.heroTextSubtitle, { color: colors.card }]}>Verified homes and magic matches await you on your grand adventure.</Text>
+                        {/* DYNAMIC FONT SIZE */}
+                        <Text style={[styles.heroTextTitle, { color: VIBRANT_ACCENT, fontSize: getDynamicSize(68, 15) }]}>
+                            Find Your <Text style={{ color: PRIMARY_COLOR }}>Magical</Text> Flatmates
+                        </Text>
+                        {/* DYNAMIC FONT SIZE */}
+                        <Text style={[styles.heroTextSubtitle, { color: colors.card, fontSize: getDynamicSize(24, 10) }]}>
+                            Verified homes and magic matches await you on your grand adventure.
+                        </Text>
                         <TouchableOpacity
                             style={[styles.heroCTA, { backgroundColor: PRIMARY_COLOR, ...SUBTLE_SHADOW }]}
                             onPress={() => navigation.navigate('Signup')}
                         >
-                            <Text style={[styles.heroCTAText, { color: VIBRANT_ACCENT }]}>Join the Kingdom</Text>
+                            {/* DYNAMIC FONT SIZE */}
+                            <Text style={[styles.heroCTAText, { color: VIBRANT_ACCENT, fontSize: getDynamicSize(22, 10) }]}>Join the Kingdom</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -376,8 +433,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={categoryRef}
                     onLayout={() => measureSection('category', categoryRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>🏰 Explore Property Categories</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Find your perfect living space: Flats, PGs, Hostels, and Houses.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>🏰 Explore Property Categories</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>Find your perfect living space: Flats, PGs, Hostels, and Houses.</Text>
 
                     <View style={styles.categoryGrid}>
                         {propertyTypes.map((type, index) => (
@@ -387,9 +446,9 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.categoryCard,
                                     {
-                                        // Active card gets the full vibrant background
+                                        width: getCardWidth(4),
                                         backgroundColor: propertyType === type ? PRIMARY_COLOR : colors.card,
-                                        borderWidth: 1, // Retain border but hide on active for clean fill
+                                        borderWidth: 1, 
                                         borderColor: propertyType === type ? PRIMARY_COLOR : colors.border,
                                         ...SUBTLE_SHADOW,
                                         ...getAnimatedCardStyle('category', index),
@@ -397,15 +456,23 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                {/* Icon wrapper added for 3D look */}
-                                <View style={[styles.iconWrapper, { backgroundColor: propertyType === type ? VIBRANT_ACCENT : PRIMARY_COLOR + '10' }]}>
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: propertyType === type ? VIBRANT_ACCENT : PRIMARY_COLOR + '10',
+                                    padding: getDynamicSize(18, 10), // Dynamic Padding
+                                    }]}>
                                     <Icon
                                         name={type === 'Flat' ? 'business-outline' : type === 'PG' ? 'bed-outline' : type === 'Hostel' ? 'school-outline' : 'home-outline'}
-                                        size={30}
+                                        size={getDynamicSize(35, 20)} // Dynamic Icon Size
                                         color={propertyType === type ? PRIMARY_COLOR : PRIMARY_COLOR}
                                     />
                                 </View>
-                                <Text style={[styles.categoryTitle, { color: propertyType === type ? VIBRANT_ACCENT : colors.text, marginTop: 15 }]}>{type}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.categoryTitle, { 
+                                    color: propertyType === type ? VIBRANT_ACCENT : colors.text, 
+                                    marginTop: 15,
+                                    fontSize: getDynamicSize(20, 10) // Dynamic Font Size
+                                    }]}>{type}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -417,8 +484,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={featureRef}
                     onLayout={() => measureSection('feature', featureRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>⭐ Quick Actions</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Your immediate path to finding or listing your perfect space.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>⭐ Quick Actions</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>Your immediate path to finding or listing your perfect space.</Text>
 
                     <View style={styles.featureGrid}>
                         {featureCards.map((card, index) => (
@@ -427,6 +496,7 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.featureCard,
                                     {
+                                        width: getCardWidth(3),
                                         backgroundColor: colors.card,
                                         ...DEEP_3D_SHADOW,
                                         ...getAnimatedCardStyle('feature', index),
@@ -434,12 +504,24 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                {/* Icon wrapper added */}
-                                <View style={[styles.iconWrapper, { backgroundColor: card.color + '15' }]}>
-                                    <Icon name={card.icon} size={30} color={card.color} />
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: card.color + '15',
+                                    padding: getDynamicSize(18, 10),
+                                }]}>
+                                    <Icon name={card.icon} size={getDynamicSize(35, 20)} color={card.color} />
                                 </View>
-                                <Text style={[styles.cardTitle, { color: colors.text, marginTop: 15 }]}>{card.title}</Text>
-                                <Text style={[styles.cardSubtitle, { color: colors.text + '80' }]}>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.cardTitle, { 
+                                    color: colors.text, 
+                                    marginTop: 15,
+                                    fontSize: getDynamicSize(24, 12)
+                                    }]}>{card.title}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.cardSubtitle, { 
+                                    color: colors.text + '80',
+                                    fontSize: getDynamicSize(16, 10)
+                                    }]}>
                                     {card.title === "Post Property" ? "List your space in 2 magical steps!" : card.title === "Find Flatmate" ? "Discover your ideal living companion." : "See our featured, high-rated homes."}
                                 </Text>
                             </TouchableOpacity>
@@ -453,8 +535,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={howItWorksRef}
                     onLayout={() => measureSection('howItWorks', howItWorksRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>🪄 How It Works: Your Fairy Tale Journey</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Find your perfect home in four simple steps.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>🪄 How It Works: Your Fairy Tale Journey</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>Find your perfect home in four simple steps.</Text>
 
                     <View style={styles.howItWorksGrid}>
                         {steps.map((step, index) => (
@@ -463,6 +547,7 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.howItWorksCard,
                                     {
+                                        width: getCardWidth(4),
                                         backgroundColor: colors.card,
                                         borderBottomColor: PRIMARY_COLOR,
                                         ...SUBTLE_SHADOW,
@@ -471,16 +556,26 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                {/* Step Circle is now more of a Badge */}
-                                <View style={[styles.stepNumberCircle, { backgroundColor: PRIMARY_COLOR, ...SUBTLE_SHADOW }]}>
-                                    <Text style={styles.stepNumberText}>{index + 1}</Text>
+                                {/* DYNAMIC CIRCLE SIZE/FONT */}
+                                <View style={[styles.stepNumberCircle, { 
+                                    backgroundColor: PRIMARY_COLOR, 
+                                    ...SUBTLE_SHADOW,
+                                    width: getDynamicSize(50, 20),
+                                    height: getDynamicSize(50, 20),
+                                    borderRadius: getDynamicSize(25, 10),
+                                    top: getDynamicSize(-25, -10),
+                                    marginLeft: getDynamicSize(-25, -10),
+                                    }]}>
+                                    <Text style={[styles.stepNumberText, { fontSize: getDynamicSize(20, 12) }]}>{index + 1}</Text>
                                 </View>
 
-                                {/* Icon is used as an accent element */}
-                                <Icon name={step.icon} size={30} color={VIBRANT_ACCENT} style={styles.stepIconAccent} />
+                                {/* DYNAMIC ICON SIZE */}
+                                <Icon name={step.icon} size={getDynamicSize(30, 10)} color={VIBRANT_ACCENT} style={[styles.stepIconAccent, { right: getDynamicSize(20, 10), top: getDynamicSize(20, 10) }]} />
 
-                                <Text style={[styles.stepTitle, { color: colors.text }]}>{step.title}</Text>
-                                <Text style={[styles.stepSubtitle, { color: colors.text + '80' }]}>{step.subtitle}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.stepTitle, { color: colors.text, fontSize: getDynamicSize(20, 12) }]}>{step.title}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.stepSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(16, 10) }]}>{step.subtitle}</Text>
 
                             </View>
                         ))}
@@ -493,8 +588,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={valueRef}
                     onLayout={() => measureSection('value', valueRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>🌟 The FlatMates Advantage</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Where technology meets comfort and magic is just around the corner.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>🌟 The FlatMates Advantage</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>Where technology meets comfort and magic is just around the corner.</Text>
 
                     <View style={styles.valuePropsGrid}>
                         {valueProps.map((prop, index) => (
@@ -503,6 +600,7 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.valuePropCard,
                                     {
+                                        width: getCardWidth(4),
                                         backgroundColor: colors.card,
                                         borderLeftColor: PRIMARY_COLOR,
                                         ...SUBTLE_SHADOW,
@@ -511,11 +609,17 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                <View style={[styles.iconWrapper, { backgroundColor: PRIMARY_COLOR + '10' }]}>
-                                    <Icon name={prop.icon} size={30} color={PRIMARY_COLOR} />
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: PRIMARY_COLOR + '10',
+                                    padding: getDynamicSize(18, 10),
+                                }]}>
+                                    <Icon name={prop.icon} size={getDynamicSize(35, 15)} color={PRIMARY_COLOR} />
                                 </View>
-                                <Text style={[styles.valuePropTitle, { color: colors.text }]}>{prop.title}</Text>
-                                <Text style={[styles.valuePropSubtitle, { color: colors.text + '80' }]}>{prop.subtitle}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.valuePropTitle, { color: colors.text, fontSize: getDynamicSize(20, 12) }]}>{prop.title}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.valuePropSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(16, 10) }]}>{prop.subtitle}</Text>
                             </View>
                         ))}
                     </View>
@@ -527,8 +631,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={communityRef}
                     onLayout={() => measureSection('community', communityRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>💖 Our Community Vibe</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>More than just a place to live, it's a supportive community.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>💖 Our Community Vibe</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>More than just a place to live, it's a supportive community.</Text>
 
                     <View style={styles.communityGrid}>
                         {communityVibes.map((vibe, index) => (
@@ -537,6 +643,7 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.communityCard,
                                     {
+                                        width: getCardWidth(4),
                                         backgroundColor: colors.card,
                                         ...SUBTLE_SHADOW,
                                         ...getAnimatedCardStyle('community', index),
@@ -544,11 +651,17 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                <View style={[styles.iconWrapper, { backgroundColor: VIBRANT_ACCENT + '15' }]}>
-                                    <Icon name={vibe.icon} size={30} color={VIBRANT_ACCENT} />
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: VIBRANT_ACCENT + '15',
+                                    padding: getDynamicSize(18, 10),
+                                }]}>
+                                    <Icon name={vibe.icon} size={getDynamicSize(35, 15)} color={VIBRANT_ACCENT} />
                                 </View>
-                                <Text style={[styles.communityTitle, { color: colors.text }]}>{vibe.title}</Text>
-                                <Text style={[styles.communitySubtitle, { color: colors.text + '80' }]}>{vibe.subtitle}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.communityTitle, { color: colors.text, fontSize: getDynamicSize(22, 12) }]}>{vibe.title}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.communitySubtitle, { color: colors.text + '80', fontSize: getDynamicSize(16, 10) }]}>{vibe.subtitle}</Text>
                             </View>
                         ))}
                     </View>
@@ -561,8 +674,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={testimonialRef}
                     onLayout={() => measureSection('testimonial', testimonialRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>💬 Hear From Our Happy Renters</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', marginBottom: 40 }]}>Real stories from the community in a chat view.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>💬 Hear From Our Happy Renters</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', marginBottom: 40, fontSize: getDynamicSize(20, 10) }]}>Real stories from the community in a chat view.</Text>
 
                     <View style={styles.testimonialGrid}>
                         {initialTestimonials.map((testimonial, index) => {
@@ -584,12 +699,15 @@ const LandingScreen = ({ navigation }) => {
                                             backgroundColor: bubbleColor,
                                             borderTopColor: topBorderColor,
                                             alignSelf: isLeft ? 'flex-start' : 'flex-end',
+                                            ...SUBTLE_SHADOW,
+                                            ...getAnimatedCardStyle('testimonial', index),
+                                        },
+                                        // Static styles that don't need dynamic width checks, but need to be applied here
+                                        {
                                             borderBottomRightRadius: isLeft ? 5 : 20,
                                             borderTopLeftRadius: isLeft ? 20 : 5,
                                             borderTopRightRadius: isLeft ? 20 : 20,
                                             borderBottomLeftRadius: isLeft ? 20 : 5,
-                                            ...SUBTLE_SHADOW,
-                                            ...getAnimatedCardStyle('testimonial', index),
                                         }
                                     ]}
                                 >
@@ -600,12 +718,14 @@ const LandingScreen = ({ navigation }) => {
 
                                     {/* 🌟 TYPING INDICATOR / QUOTE */}
                                     {isTyping ? (
-                                        <Text style={[styles.typingText, { color: colors.text + '90' }]}>
+                                        // DYNAMIC FONT SIZE
+                                        <Text style={[styles.typingText, { color: colors.text + '90', fontSize: getDynamicSize(18, 10) }]}>
                                             {quoteContent}
                                             <Text style={styles.blinkingCursor}>|</Text>
                                         </Text>
                                     ) : (
-                                        <Text style={[styles.testimonialQuote, { color: colors.text }]}>
+                                        // DYNAMIC FONT SIZE
+                                        <Text style={[styles.testimonialQuote, { color: colors.text, fontSize: getDynamicSize(18, 10) }]}>
                                             {quoteContent}
                                         </Text>
                                     )}
@@ -618,9 +738,11 @@ const LandingScreen = ({ navigation }) => {
                                             transition: 'opacity 0.3s ease',
                                         }
                                     ]}>
-                                        <Text style={[styles.testimonialName, { color: nameColor }]}>{testimonial.name}</Text>
-                                        <Text style={[styles.testimonialLocation, { color: colors.text + '80' }]}>
-                                            <Icon name="location" size={12} /> {testimonial.location}
+                                        {/* DYNAMIC FONT SIZE */}
+                                        <Text style={[styles.testimonialName, { color: nameColor, fontSize: getDynamicSize(18, 12) }]}>{testimonial.name}</Text>
+                                        {/* DYNAMIC FONT SIZE & ICON */}
+                                        <Text style={[styles.testimonialLocation, { color: colors.text + '80', fontSize: getDynamicSize(14, 10) }]}>
+                                            <Icon name="location" size={getDynamicSize(12, 10)} /> {testimonial.location}
                                         </Text>
                                     </View>
 
@@ -640,8 +762,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={neighborhoodsRef}
                     onLayout={() => measureSection('neighborhoods', neighborhoodsRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>🗺️ Featured Neighborhoods</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', marginBottom: 40 }]}>Discover the most magical and sought-after localities.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>🗺️ Featured Neighborhoods</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', marginBottom: 40, fontSize: getDynamicSize(20, 10) }]}>Discover the most magical and sought-after localities.</Text>
 
                     <View style={styles.neighborhoodGrid}>
                         {neighborhoods.map((n, index) => (
@@ -650,6 +774,7 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.neighborhoodCard,
                                     {
+                                        width: getCardWidth(4),
                                         backgroundColor: colors.card,
                                         borderRightColor: PRIMARY_COLOR,
                                         ...SUBTLE_SHADOW,
@@ -658,14 +783,23 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                <View style={[styles.iconWrapper, { backgroundColor: SECONDARY_ACCENT + '15', marginBottom: 15 }]}>
-                                    <Icon name={n.icon} size={30} color={SECONDARY_ACCENT} />
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: SECONDARY_ACCENT + '15', 
+                                    marginBottom: 15,
+                                    padding: getDynamicSize(18, 10),
+                                }]}>
+                                    <Icon name={n.icon} size={getDynamicSize(35, 15)} color={SECONDARY_ACCENT} />
                                 </View>
-                                <Text style={[styles.neighborhoodTitle, { color: colors.text }]}>{n.name}</Text>
-                                <Text style={[styles.neighborhoodSubtitle, { color: VIBRANT_ACCENT }]}>{n.vibe}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.neighborhoodTitle, { color: colors.text, fontSize: getDynamicSize(22, 12) }]}>{n.name}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.neighborhoodSubtitle, { color: VIBRANT_ACCENT, fontSize: getDynamicSize(16, 10) }]}>{n.vibe}</Text>
                                 <View style={styles.ratingRow}>
-                                    <Icon name="star" size={16} color={VIBRANT_ACCENT} />
-                                    <Text style={[styles.ratingText, { color: colors.text + '90' }]}>{n.rating}</Text>
+                                    {/* DYNAMIC ICON SIZE */}
+                                    <Icon name="star" size={getDynamicSize(16, 11)} color={VIBRANT_ACCENT} />
+                                    {/* DYNAMIC FONT SIZE */}
+                                    <Text style={[styles.ratingText, { color: colors.text + '90', fontSize: getDynamicSize(18, 11) }]}>{n.rating}</Text>
                                 </View>
                             </View>
                         ))}
@@ -679,8 +813,10 @@ const LandingScreen = ({ navigation }) => {
                     ref={previewRef}
                     onLayout={() => measureSection('preview', previewRef)}
                 >
-                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR }]}>🔮 Sneak Peek: Future Features</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80' }]}>Building the future of shared living, one magical feature at a time.</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>🔮 Sneak Peek: Future Features</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>Building the future of shared living, one magical feature at a time.</Text>
 
                     <View style={styles.previewGrid}>
                         {featurePreviews.map((preview, index) => (
@@ -689,6 +825,7 @@ const LandingScreen = ({ navigation }) => {
                                 style={[
                                     styles.previewCard,
                                     {
+                                        width: getCardWidth(3),
                                         backgroundColor: colors.card,
                                         borderBottomColor: PRIMARY_COLOR,
                                         ...SUBTLE_SHADOW,
@@ -697,11 +834,17 @@ const LandingScreen = ({ navigation }) => {
                                     }
                                 ]}
                             >
-                                <View style={[styles.iconWrapper, { backgroundColor: VIBRANT_ACCENT + '15' }]}>
-                                    <Icon name={preview.icon} size={30} color={VIBRANT_ACCENT} />
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: VIBRANT_ACCENT + '15',
+                                    padding: getDynamicSize(18, 10),
+                                }]}>
+                                    <Icon name={preview.icon} size={getDynamicSize(35, 15)} color={VIBRANT_ACCENT} />
                                 </View>
-                                <Text style={[styles.previewTitle, { color: colors.text }]}>{preview.title}</Text>
-                                <Text style={[styles.previewSubtitle, { color: colors.text + '80' }]}>{preview.subtitle}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.previewTitle, { color: colors.text, fontSize: getDynamicSize(22, 12) }]}>{preview.title}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.previewSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(16, 10) }]}>{preview.subtitle}</Text>
                             </View>
                         ))}
                     </View>
@@ -718,7 +861,7 @@ const LandingScreen = ({ navigation }) => {
 };
 
 
-// --- WEB-SPECIFIC STYLES ---
+// --- WEB-SPECIFIC STYLES (Keep static layout and base styles here) ---
 const styles = StyleSheet.create({
     scrollContentWeb: {
         flexGrow: 0,
@@ -746,18 +889,17 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         paddingHorizontal: 20,
     },
+    // Font sizes are now dynamic/inline in JSX, but keeping base styles here
     sectionTitle: {
-        fontSize: width > BREAKPOINT ? 42 : 32, // Larger Font
-        fontWeight: '900', // Extremely bold
+        fontWeight: '900', 
         textAlign: 'center',
         marginBottom: 8,
-        letterSpacing: 0.5, // Added for hero look
+        letterSpacing: 0.5, 
     },
     sectionSubtitle: {
-        fontSize: width > BREAKPOINT ? 20 : 16,
         fontWeight: '500',
         textAlign: 'center',
-        marginBottom: 40, // Increased margin
+        marginBottom: 40,
     },
 
     // 👑 HEADER BAR STYLE (CENTERED FIX)
@@ -776,11 +918,11 @@ const styles = StyleSheet.create({
         width: MAX_WEB_WIDTH,
     },
 
-headerLogoContainer: { // Added: Container for icon and title
+headerLogoContainer: { 
         flexDirection: 'row',
         alignItems: 'center',
     },
-    headerLogo: { // Added: Icon image style
+    headerLogo: { 
         height: 40,
         width: 40, 
         marginRight: 10,
@@ -788,9 +930,8 @@ headerLogoContainer: { // Added: Container for icon and title
     
     // 👑 ENHANCED HEADER TITLE STYLE
     headerTitle: {
-        fontSize: width > BREAKPOINT ? 28 : 22,
-        fontWeight: '900', // Made extra bold
-        letterSpacing: 0.5, // Added spacing
+        fontWeight: '900', 
+        letterSpacing: 0.5, 
     },
     loginButton: {
         width: 45,
@@ -808,20 +949,19 @@ headerLogoContainer: { // Added: Container for icon and title
     // 🏰 --- HERO SECTION STYLES (Parallax) ---
     heroContainer: {
         position: 'relative',
-        width: '100%',
-        height: width > BREAKPOINT ? '65vh' : '55vh', // Increased height
         marginTop: width > BREAKPOINT ? 10 + 5 : 5 + 5,
         overflow: 'hidden',
         borderRadius: GENEROUS_RADIUS * 2,
         zIndex: 5,
         alignSelf: 'center',
         maxWidth: MAX_WEB_WIDTH,
+        width: '100%',
     },
     heroImage: {
         position: 'absolute',
         width: '100%',
         height: '100%',
-        opacity: 0.2, // Reduced opacity for better text readability
+        opacity: 0.2, 
     },
     heroContent: {
         position: 'absolute',
@@ -830,47 +970,43 @@ headerLogoContainer: { // Added: Container for icon and title
         justifyContent: 'center',
         alignItems: 'center',
         padding: 40,
-        backgroundColor: 'rgba(0,0,0,0.7)', // Darker overlay for contrast
+        backgroundColor: 'rgba(0,0,0,0.7)', 
     },
     heroTextTitle: {
-        fontSize: width > BREAKPOINT ? 68 : 45, // Much larger
         fontWeight: '900',
         textAlign: 'center',
         marginBottom: 15,
-        textShadow: '3px 3px 10px rgba(0,0,0,1)', // Stronger shadow
-        letterSpacing: 1.5, // Added
+        textShadow: '3px 3px 10px rgba(0,0,0,1)', 
+        letterSpacing: 1.5, 
     },
     heroTextSubtitle: {
-        fontSize: width > BREAKPOINT ? 24 : 18,
         fontWeight: '500',
         textAlign: 'center',
-        marginBottom: 40, // Increased margin
+        marginBottom: 40, 
         textShadow: '1px 1px 4px rgba(0,0,0,1)',
     },
     heroCTA: {
-        paddingVertical: 15,
-        paddingHorizontal: 40,
-        borderRadius: 50,
+        paddingVertical: 10,
+        paddingHorizontal: 30,
+        borderRadius: 30,
         transition: 'all 0.3s ease',
         ':hover': {
             transform: [{ scale: 1.05 }],
         },
     },
     heroCTAText: {
-        fontSize: 22,
         fontWeight: '900',
     },
 
-    // 🌟 REUSABLE ICON WRAPPER STYLE
+    // 🌟 REUSABLE ICON WRAPPER STYLE (Padding dynamic in JSX)
     iconWrapper: {
-        padding: 15,
-        borderRadius: 15, // Square/Rounded box for icons
+        borderRadius: 15, 
         marginBottom: 5,
         ...SUBTLE_SHADOW,
     },
 
 
-    // --- Explore Categories Styles ---
+    // --- Card Grid Styles (Keep Flexbox here) ---
     categoryGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -878,45 +1014,38 @@ headerLogoContainer: { // Added: Container for icon and title
         paddingVertical: 10,
     },
     categoryCard: {
-        width: width > BREAKPOINT ? '23%' : '48%',
-        padding: 25,
+        padding: 20,
         borderRadius: GENEROUS_RADIUS,
         alignItems: 'center',
         marginBottom: 20,
         borderWidth: 1,
     },
     categoryTitle: {
-        fontSize: 20, // Slightly larger
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
     },
 
-    // --- Feature Grid Styles ---
     featureGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: width > BREAKPOINT ? 'space-between' : 'center',
+        justifyContent: 'space-between',
         paddingVertical: 10,
     },
     featureCard: {
-        width: width > BREAKPOINT ? '30%' : '90%',
         padding: 30,
         borderRadius: GENEROUS_RADIUS,
         alignItems: 'center',
         marginBottom: 30,
     },
     cardTitle: {
-        fontSize: 24,
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
         marginBottom: 8,
         textAlign: 'center',
     },
     cardSubtitle: {
-        fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
     },
 
-    // --- How It Works Styles ---
     howItWorksGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -924,49 +1053,36 @@ headerLogoContainer: { // Added: Container for icon and title
         paddingVertical: 20,
     },
     howItWorksCard: {
-        width: width > BREAKPOINT ? '23%' : '48%',
         padding: 25,
         paddingTop: 45,
         borderRadius: BUTTON_RADIUS,
-        marginBottom: 30, // Increased spacing
+        marginBottom: 30, 
         borderBottomWidth: 4,
         alignItems: 'flex-start',
         position: 'relative',
-        borderBottomColor: PRIMARY_COLOR, // Border color set to Primary
+        borderBottomColor: PRIMARY_COLOR, 
     },
     stepNumberCircle: {
-        width: 50, // Larger circle
-        height: 50,
-        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        top: -25, // Centered vertically on the border
-        left: '50%',
-        marginLeft: -25,
     },
     stepNumberText: {
         color: '#fff',
         fontWeight: '900',
-        fontSize: 20, // Larger number
     },
     stepIconAccent: {
         position: 'absolute',
-        top: 20,
-        right: 20,
     },
     stepTitle: {
-        fontSize: 20, // Larger
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
         marginBottom: 5,
         marginTop: 15,
     },
     stepSubtitle: {
-        fontSize: 16, // Larger subtitle
         textAlign: 'left',
     },
 
-    // --- Value Proposition Styles ---
     valuePropsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -974,7 +1090,6 @@ headerLogoContainer: { // Added: Container for icon and title
         paddingVertical: 20,
     },
     valuePropCard: {
-        width: width > BREAKPOINT ? '23%' : '48%',
         padding: 20,
         borderRadius: BUTTON_RADIUS,
         marginBottom: 20,
@@ -983,17 +1098,14 @@ headerLogoContainer: { // Added: Container for icon and title
         alignItems: 'flex-start',
     },
     valuePropTitle: {
-        fontSize: 20, // Larger
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
         marginBottom: 5,
         marginTop: 15,
     },
     valuePropSubtitle: {
-        fontSize: 16, // Larger subtitle
         textAlign: 'left',
     },
 
-    // --- Community Vibe Styles ---
     communityGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -1001,21 +1113,18 @@ headerLogoContainer: { // Added: Container for icon and title
         paddingVertical: 20,
     },
     communityCard: {
-        width: width > BREAKPOINT ? '23%' : '48%',
         padding: 25,
         borderRadius: GENEROUS_RADIUS,
         alignItems: 'center',
         marginBottom: 20,
     },
     communityTitle: {
-        fontSize: 22, // Larger
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
         marginBottom: 5,
         textAlign: 'center',
         marginTop: 15,
     },
     communitySubtitle: {
-        fontSize: 16,
         textAlign: 'center',
     },
 
@@ -1027,12 +1136,12 @@ headerLogoContainer: { // Added: Container for icon and title
         alignItems: 'center',
     },
     testimonialCard: {
-        maxWidth: 600, // Wider card
+        maxWidth: 600, 
         width: width > BREAKPOINT ? '50%' : '90%',
-        padding: 30, // Increased padding
+        padding: 30, 
         borderRadius: 20,
         marginBottom: 25,
-        borderTopWidth: 5, // Top border for highlight
+        borderTopWidth: 5, 
         position: 'relative',
     },
     chatTail: {
@@ -1057,7 +1166,6 @@ headerLogoContainer: { // Added: Container for icon and title
         borderRightWidth: 0,
     },
     testimonialQuote: {
-        fontSize: 18, // Larger quote font
         fontStyle: 'italic',
         lineHeight: 28,
         marginBottom: 15,
@@ -1067,18 +1175,15 @@ headerLogoContainer: { // Added: Container for icon and title
         width: '100%',
     },
     testimonialName: {
-        fontSize: 18, // Larger
         fontWeight: '900',
         marginBottom: 3,
         letterSpacing: 0.5,
     },
     testimonialLocation: {
-        fontSize: 14,
     },
 
     // 🌟 TYPING ANIMATION STYLES
     typingText: {
-        fontSize: 18,
         fontStyle: 'italic',
         lineHeight: 28,
         marginBottom: 15,
@@ -1105,7 +1210,6 @@ headerLogoContainer: { // Added: Container for icon and title
         paddingVertical: 20,
     },
     neighborhoodCard: {
-        width: width > BREAKPOINT ? '23%' : '48%',
         padding: 25,
         borderRadius: BUTTON_RADIUS,
         marginBottom: 25,
@@ -1115,13 +1219,11 @@ headerLogoContainer: { // Added: Container for icon and title
         textAlign: 'center',
     },
     neighborhoodTitle: {
-        fontSize: 22, // Larger
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
         marginBottom: 3,
         textAlign: 'center',
     },
     neighborhoodSubtitle: {
-        fontSize: 16, // Larger
         fontWeight: '600',
         marginBottom: 10,
         textAlign: 'center',
@@ -1133,7 +1235,6 @@ headerLogoContainer: { // Added: Container for icon and title
     },
     ratingText: {
         marginLeft: 8,
-        fontSize: 18, // Larger
         fontWeight: '900',
     },
 
@@ -1145,62 +1246,61 @@ headerLogoContainer: { // Added: Container for icon and title
         paddingVertical: 20,
     },
     previewCard: {
-        width: width > BREAKPOINT ? '30%' : '90%',
         padding: 25,
         borderRadius: BUTTON_RADIUS,
         marginBottom: 25,
         borderBottomWidth: 5,
-        borderBottomColor: VIBRANT_ACCENT, // Changed border color for contrast
+        borderBottomColor: VIBRANT_ACCENT, 
         alignItems: 'center',
         textAlign: 'center',
     },
     previewTitle: {
-        fontSize: 22, // Larger
-        fontWeight: '900', // Very bold
+        fontWeight: '900', 
         marginBottom: 5,
         textAlign: 'center',
         marginTop: 15,
     },
     previewSubtitle: {
-        fontSize: 16,
         textAlign: 'center',
     },
 
 
-    // 🦶 BEAUTIFUL FOOTER STYLES
+  // 🦶 BEAUTIFUL FOOTER STYLES
     footerContainer: {
-        paddingVertical: 50,
-        paddingHorizontal: 20,
+
         borderTopWidth: 1,
         marginTop: 60, // More space before footer
-        alignSelf: 'stretch',
+        textAlign:'center',
+        justifyContent:'center'
     },
+    
+    // NEW STYLE FOR THE BRANDING SECTION HEADER
+    footerBrandingHeader: {
+        flexDirection:'row',
+        width: '100%',
+        alignSelf: 'center',
+        display:'flex',
+        justifyContent:'space-between',
+        marginBottom: width > BREAKPOINT ? 20 : 15, // Add separation margin
+    },
+
     footerContent: {
         flexDirection: width > BREAKPOINT ? 'row' : 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         maxWidth: MAX_WEB_WIDTH,
         alignSelf: 'center',
-        width: '100%',
+        width: width > BREAKPOINT ? '20%' : '100%', // These sections keep their width logic
         marginBottom: 40,
+        marginTop:20,
     },
     footerSection: {
-        width: width > BREAKPOINT ? '22%' : '100%',
+        width: width > BREAKPOINT ? '20%' : '100%', // These sections keep their width logic
         marginBottom: width > BREAKPOINT ? 0 : 30,
     },
 
     // 👑 FOOTER LOGO STYLES
-    footerLogo: {
-        height: 50,
-        width: 250, // Adjusted width for better fit in the section
-        marginBottom: 10,
-        resizeMode: 'contain',
-    },
+    
 
-    footerSubtitle: {
-        fontSize: 16,
-        marginBottom: 20,
-        lineHeight: 24,
-    },
     footerHeading: {
         fontSize: 20,
         fontWeight: '900', // Very bold

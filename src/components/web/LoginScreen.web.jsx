@@ -17,11 +17,11 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { useAuth } from '../../context/AuthContext';
+// 💡 FIX: Destructure required styles from the theme for easy access
 import { useTheme } from '../../theme/theme'; 
 import { API_BASE_URL } from '@env'; 
 // Recaptcha कंपोनेंट अब इस्तेमाल नहीं हो रहा
 
-// 🎯 OLD IMPORT REMOVED: import BasicDetailForm from './BasicDetailForm.web.jsx'; 
 // 🚀 NEW: Import the extracted SSO Buttons
 import SSOButtons from './sso.web.jsx'; 
 // 💡 NEW: Import reCAPTCHA hook and container component
@@ -31,7 +31,6 @@ import useRecaptcha, { RecaptchaContainer } from './captcha.web.jsx';
 const { width } = Dimensions.get('window');
 const BREAKPOINT = 768; 
 const LOGIN_URL = `${API_BASE_URL}/flatmate/login`; 
-// 🎯 PROFILE_COMPLETE_URL REMOVED
 
 
 // 🛡️ SECURITY HELPER 1: Client-Side Sanitization
@@ -44,9 +43,6 @@ const sanitizeString = (input) => {
 const isValidEmail = (email) => {
     return /\S+@\S+\.\S+/.test(email);
 };
-
-
-// 🎯 BasicDetailForm Component REMOVED
 
 
 // Reusable Login Form (Step 1)
@@ -66,17 +62,17 @@ const LoginForm = ({
     recaptchaContainerRef, 
     isRecaptchaReady, // 💡 Prop added to accept readiness state
 }) => (
-    <View style={[
+      <View style={[
         styles.authContainerBase,
         { backgroundColor: colors.card },
+        // Web/Tablet: 50% width, more padding. Mobile: 100% width, appropriate padding.
         isWebOrTablet 
           ? { width: '50%', padding: 50 } 
-          : { paddingHorizontal: 30, width: '100%', paddingVertical: 40 } 
+          : { paddingHorizontal: 30, width: '100%', paddingVertical: 40 } // Mobile width and padding
     ]}>
-        {/* 💡 STEPPER UI ADDITION REMOVED */}
-        {/* <Text style={[styles.stepIndicator, { color: colors.textSecondary }]}>Step 1 of 2: Login</Text> */}
         <Text style={[styles.authHeader, { color: colors.text }]}>Welcome Back</Text>
         
+        {/* Email Input */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
           <TextInput
@@ -94,7 +90,7 @@ const LoginForm = ({
             editable={!isLoading}
           />
         </View>
-        {/* ... (Password Input) ... */}
+        {/* Password Input */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
           <TextInput
@@ -134,13 +130,14 @@ const LoginForm = ({
             onPress={handleLogin} 
             style={[
               styles.actionButton, 
-              { backgroundColor: colors.primary, borderRadius: styles.GENEROUS_RADIUS },
+              // 💡 FIX: Access GENEROUS_RADIUS via styles object
+              { backgroundColor: colors.primary, borderRadius: styles.GENEROUS_RADIUS }, 
               SUBTLE_SHADOW,
-              (isLoading || !isRecaptchaReady) && styles.disabledButton // 💡 FIX: Disable if loading OR not ready
+              (isLoading || !isRecaptchaReady) && styles.disabledButton
             ]}
-            disabled={isLoading || !isRecaptchaReady} // 💡 FIX: Disable if loading OR not ready
+            disabled={isLoading || !isRecaptchaReady} 
         >
-           {/* 💡 FIX: Show appropriate indicator/text based on readiness and loading */}
+           {/* Show appropriate indicator/text based on readiness and loading */}
            {(isLoading || !isRecaptchaReady) ? ( 
             <Text style={styles.actionButtonText}>
                 {isRecaptchaReady ? 'LOGGING IN...' : 'SECURITY CHECK...'}
@@ -174,6 +171,7 @@ const LoginForm = ({
 
 // Login Screen Web
 const LoginScreen = ({ navigation }) => {
+  // 💡 FIX: Destructure all required theme properties
   const { colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW, SUBTLE_SHADOW } = useTheme(); 
   
   const insets = useSafeAreaInsets();
@@ -184,8 +182,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false); 
   
-  // --- 💡 RECAPTCHA HOOK USAGE FIX ---
-  // FIX: isRecaptchaReady को डीस्ट्रक्चर करें
+  // --- 💡 RECAPTCHA HOOK USAGE ---
   const { recaptchaContainerRef, executeRecaptcha, isRecaptchaReady } = useRecaptcha(); 
 
   const isWebOrTablet = width > BREAKPOINT; 
@@ -211,7 +208,7 @@ const LoginScreen = ({ navigation }) => {
 
     setIsLoading(true);
 
-    // 💡 FIX: Geolocation logic re-added
+    // 💡 Geolocation logic re-added
     let userLocation = { latitude: null, longitude: null };
     if (navigator.geolocation) {
         try {
@@ -278,10 +275,10 @@ const LoginScreen = ({ navigation }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             email: sanitizedEmail, 
-            password: password, // 💡 FIX: Send sanitized password
+            password: password, 
             captchaToken: captchaToken, // 🛡️ SEND THE DYNAMICALLY GENERATED TOKEN
-            latitude: userLocation.latitude,   // 💡 FIX: Send Location
-            longitude: userLocation.longitude, // 💡 FIX: Send Location
+            latitude: userLocation.latitude,   
+            longitude: userLocation.longitude, 
         }),
         credentials: 'include',
       });
@@ -289,7 +286,7 @@ const LoginScreen = ({ navigation }) => {
 
       if (res.ok) {
         await login(data.user);
-        // 🎯 DIRECT NAVIGATION: navigateAfterLogin removed
+        // DIRECT NAVIGATION
         navigation.replace("Home"); 
       } else {
         // अगर टोकन वेरिफिकेशन सर्वर पर विफल हो जाता है, तो यह यहाँ विफल हो जाएगा
@@ -303,8 +300,8 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  // 💡 FIX: Pass theme properties as a single object to getStyles to avoid TypeError
-  const dynamicStyles = getStyles({ colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW });
+  // 💡 FIX: Pass theme properties as a single object to getStyles
+  const dynamicStyles = getStyles({ colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW, SUBTLE_SHADOW, BREAKPOINT, width });
 
 
   return (
@@ -313,23 +310,24 @@ const LoginScreen = ({ navigation }) => {
         style={dynamicStyles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Centered Scroll View for Web */}
         <ScrollView contentContainerStyle={dynamicStyles.scrollContent}>
 
-          {/* Hero + Form Shadow Card */}
+          {/* Hero + Form Shadow Card - Applying DEEP_SOFT_SHADOW for the floating 3D effect */}
           <View style={[
             dynamicStyles.webContainer, 
             DEEP_SOFT_SHADOW, 
             { backgroundColor: colors.card, borderRadius: GENEROUS_RADIUS } 
           ]}>
 
-                {/* Hero Section (Left Panel) */}
-                {/* Hero Section always visible for web/tablet view */}
+                {/* Hero Section (Left Panel) - Visible for web/tablet view */}
                 {isWebOrTablet && (
                   <View style={[
                       dynamicStyles.heroSection, 
+                      // Using a mix of primary and card colors for the vibrant look
                       { backgroundColor: colors.primary, borderRadius: GENEROUS_RADIUS }
                   ]}>
-                      {/* FIX: Confirmed 'home-outline' usage for icon error fix */}
+                      {/* Using the card color for contrast on the primary background */}
                       <Icon name="home-outline" size={90} color={colors.card} /> 
                       <Text style={dynamicStyles.logoText}>FlatMates Hub</Text> 
                       <Text style={dynamicStyles.tagline}>
@@ -338,7 +336,7 @@ const LoginScreen = ({ navigation }) => {
                   </View>
                 )}
 
-                {/* 🎯 CONDITIONAL RENDERING BLOCK REMOVED */}
+                {/* Login Form (Right Panel) */}
                 <LoginForm 
                     email={email}
                     setEmail={setEmail}
@@ -351,7 +349,7 @@ const LoginScreen = ({ navigation }) => {
                     isLoading={isLoading}
                     styles={dynamicStyles} 
                     colors={colors}
-                    SUBTLE_SHADOW={SUBTLE_SHADOW} 
+                    SUBTLE_SHADOW={SUBTLE_SHADOW} // Pass the shadow style
                     recaptchaContainerRef={recaptchaContainerRef} 
                     isRecaptchaReady={isRecaptchaReady} 
                 />
@@ -365,21 +363,39 @@ const LoginScreen = ({ navigation }) => {
 
 
 // 🎨 Theme-based Dynamic Stylesheet
-// 💡 FIX: Accept a single 'theme' object to match the call site
 const getStyles = (theme) => {
     // Destructure properties from the theme object passed to getStyles
-    const { colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW } = theme;
+    const { colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW, SUBTLE_SHADOW, BREAKPOINT, width } = theme;
+
+    // 🌟 HOVER EFFECT MIXIN (To match LandingScreen's 3D feel on buttons)
+    const hoverScaleEffect = {
+        transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        ':hover': {
+            transform: [{ scale: 1.03 }], // Slightly lifts the button
+            // Use a slight shadow based on the text color for depth
+            boxShadow: `0 10px 20px 0px ${colors.text}25`, 
+        },
+    };
 
     return StyleSheet.create({
         // ... (Existing Global/Container Styles) ...
         safeArea: { flex: 1, backgroundColor: colors.background },
         keyboardView: { flex: 1 },
-        scrollContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+        // Ensure content is centered for the large web view
+        scrollContent: { 
+            flexGrow: 1, 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            margin:'10px',
+            paddingVertical: 40,
+            paddingHorizontal: width > BREAKPOINT ? 20 : 0, // Add horizontal padding for mobile view safety
+        },
 
         webContainer: { 
             flexDirection: 'row', 
             width: '100%', 
-            maxWidth:'1000px',
+            // Max width set to 1000px for a contained, centered web experience
+            maxWidth: width > BREAKPOINT ? 1000 : '100%', 
             backgroundColor: colors.card, 
             borderRadius: GENEROUS_RADIUS, 
             overflow: 'hidden',
@@ -392,14 +408,17 @@ const getStyles = (theme) => {
             padding: 50, 
             justifyContent: 'center', 
             alignItems: 'center',
+            // Ensure the Hero has the rounded corner treatment
+            borderTopLeftRadius: GENEROUS_RADIUS,
+            borderBottomLeftRadius: GENEROUS_RADIUS,
         },
         logoText: { 
             fontSize: 40, 
-            fontWeight: '800', 
+            fontWeight: '900', // BOLDNESS INCREASED
             color: colors.card, 
             textAlign: 'center', 
             marginTop: 20, 
-            letterSpacing: 0.5 
+            letterSpacing: 1, // Increased spacing for prominence
         },
         tagline: { 
             fontSize: 18, 
@@ -407,6 +426,7 @@ const getStyles = (theme) => {
             textAlign: 'center', 
             marginTop: 20,
             lineHeight: 25,
+            fontWeight: '600', // Increased weight
         },
 
    
@@ -416,25 +436,32 @@ const getStyles = (theme) => {
             width: '100%' 
         },
         authHeader: { 
-            fontSize: 34, 
-            fontWeight: '800', 
+            fontSize: width > BREAKPOINT ? 36 : 28, // 💡 FIX: Responsive font size
+            fontWeight: '900', // Increased to max bold for the 'magical' look
             color: colors.text, 
             marginBottom: 40, 
-            textAlign: 'left'
+            textAlign: 'left',
+            letterSpacing: 0.5,
         },
 
         inputGroup: { marginBottom: 25 }, 
         label: { 
-            fontSize: 15, 
+            fontSize: width > BREAKPOINT ? 16 : 15, // Slightly responsive label
             marginBottom: 8, 
-            fontWeight: '600'
+            fontWeight: '700' // Bolder label
         },
         input: { 
-            borderRadius: 12, 
-            height: 55, 
-            paddingHorizontal: 15, 
-            fontSize: 16, 
-            borderWidth: 1.5, 
+            borderRadius: 15, // More rounded corners
+            height: 60, // Taller input field
+            paddingHorizontal: 20, // More internal padding
+            fontSize: 18, // Larger text input
+            borderWidth: 2, // Thicker border for prominence
+            // 💡 Hover/Focus Effect (Web-only)
+            transition: 'border-color 0.2s',
+            ':focus': {
+                borderColor: colors.primary, // Primary color highlight on focus
+                outline: 'none', // Remove default browser outline
+            }
         },
 
         // 🤖 RECAPTCHA Styles
@@ -457,19 +484,21 @@ const getStyles = (theme) => {
         },
         forgotPasswordText: { 
             textAlign: 'right', 
-            fontSize: 14, 
-            fontWeight: '700' 
+            fontSize: 15, 
+            fontWeight: '800' // Bolder
         },
         actionButton: { 
             paddingVertical: 18, 
             alignItems: 'center', 
+            borderRadius:'20px',
             marginTop: 10,
+            ...hoverScaleEffect, // Applying the 3D hover effect
         },
         actionButtonText: { 
             color: colors.card, 
             fontSize: 18, 
             fontWeight: '900',
-            letterSpacing: 1.2, 
+            letterSpacing: 1.5, // Increased letter spacing
         },
         disabledButton: { opacity: 0.6 },
   
@@ -477,7 +506,7 @@ const getStyles = (theme) => {
         switchButtonText: { 
             textAlign: 'center', 
             fontSize: 15, 
-            fontWeight: '500' 
+            fontWeight: '600' // Bolder
         },
         switchButtonHighlight: {
             fontWeight: '900', 
@@ -488,26 +517,25 @@ const getStyles = (theme) => {
         orSeparator: { 
             textAlign: 'center', 
             marginVertical: 25,
-            fontSize: 12,
-            fontWeight: '700', 
-            letterSpacing: 1.5,
+            fontSize: 13, // Slightly larger
+            fontWeight: '900', // Max bold
+            letterSpacing: 2, // Increased spacing
         },
         socialButton: { 
             flexDirection: 'row', 
             justifyContent: 'center', 
             alignItems: 'center', 
-            borderRadius: 12, 
+            borderRadius: 15, // More rounded
             paddingVertical: 14, 
-            marginTop: 12, 
-            borderWidth: 1, 
+            marginTop: 15, // More margin
+            borderWidth: 1.5, // Slightly thicker border
+            ...hoverScaleEffect, // Applying the 3D hover effect
         },
         socialButtonText: { 
             fontSize: 16, 
-            fontWeight: '600', 
+            fontWeight: '700', // Bolder
             marginLeft: 10 
         },
-
-
     });
 };
 

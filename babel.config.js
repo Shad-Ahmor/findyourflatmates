@@ -1,25 +1,22 @@
-// babel.config.js (Fixed Syntax for react-native-dotenv)
+// babel.config.js
 
 module.exports = function(api) {
   api.cache(true);
   return {
-    presets: [
-      ["babel-preset-expo"],
-    ],
+    presets: ['babel-preset-expo'],
     plugins: [
-      'react-native-reanimated/plugin',
+      // ... अन्य प्लगइन्स (जैसे reanimated)
+      'react-native-reanimated/plugin', 
       
-      // ✅ FIX: प्लगइन नाम और विकल्प एक साथ, नेस्टेड array में
-      [
-        "module:react-native-dotenv", // ⬅️ प्लगइन का नाम (पहला तत्व)
-        {                               // ⬅️ विकल्प ऑब्जेक्ट (दूसरा तत्व)
-          moduleName: "@env",
-          path: ".env",
-          safe: false,
-          allowUndefined: true,
-          verbose: false
-        }
-      ]
+      // 🌟 FIX: react-native-dotenv कॉन्फ़िगरेशन जोड़ें/जाँचें
+      ["module:react-native-dotenv", {
+        "envName": "APP_ENV",
+        "moduleName": "@env",
+        "path": ".env", // सुनिश्चित करें कि आपकी .env फ़ाइल रूट डायरेक्टरी में है
+        "safe": false,
+        "allowUndefined": true,
+        "verbose": false
+      }]
     ],
   };
 };

@@ -21,8 +21,8 @@ import { useAuth } from '../../../context/AuthContext';
 
 // Screens & Components
 import WebHeader from '../../web/navigation/WebHeader.js'; 
-import SearchScreen from '../HomeScreen.android.jsx';
-import ListingFormScreen from '../ListingFormScreen.android.jsx';
+import SearchScreen from '../HomeScreen.mobile.jsx';
+import ListingFormScreen from '../ListingFormScreen.mobile.jsx';
 import MessagingScreen from '../../../screens/MessagingScreen.jsx';
 import ProfileScreen from '../../../screens/ProfileScreen.jsx'; 
 

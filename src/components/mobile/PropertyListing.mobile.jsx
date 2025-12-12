@@ -18,9 +18,9 @@ const BREAKPOINT = 768;
 
 // Hero images
 const heroImages = [
- require('../../../assets/hero_slide1.png'),
- require('../../../assets/hero_slide_2.png'),
- require('../../../assets/hero_slide_3.png'),
+//  require('../../../assets/hero_slide1.png'),
+//  require('../../../assets/hero_slide_2.png'),
+//  require('../../../assets/hero_slide_3.png'),
 ];
 
 // --- EXTENDED DUMMY PROPERTIES ---
