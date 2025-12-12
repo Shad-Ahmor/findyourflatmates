@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "render-build": "npm install --legacy-peer-deps && npm run build:web",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
