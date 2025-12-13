@@ -27,6 +27,7 @@ const ALL_LISTINGS_ENDPOINT = `${BASE_API_URL}/flatmate/listing/all`;
 // 💡 NEW BREAKPOINTS for better responsiveness
 const MOBILE_BREAKPOINT = 500;
 const TABLET_BREAKPOINT = 1024; 
+const BREAKPOINT = MOBILE_BREAKPOINT; // Ensure BREAKPOINT constant is defined
 
 // -----------------------------------------------------------------
 // 🎨 ENHANCED DISNEY-ESQUE STYLES & CONSTANTS (Game/Animated UI Look)
@@ -38,115 +39,170 @@ const VIBRANT_ACCENT = '#FFC700'; // Gold/Yellow accent (for price/star)
 const DEEP_SOFT_SHADOW = {
     // Web (boxShadow) equivalent: Deeper, wider shadow for floating effect
     boxShadow: `0 15px 35px 0px rgba(16, 42, 67, 0.5)`, 
-    elevation: 15, // RN/Android Fallback
+    // RN (shadow/elevation) fallback
+    shadowColor: BASE_SHADOW_COLOR, 
+    shadowOffset: { width: 0, height: 15 }, 
+    shadowOpacity: 0.35, 
+    shadowRadius: 25, 
+    elevation: 15, // Increased elevation
 };
 
 // Subtle Shadow for internal elements (Web-Optimized)
 const SUBTLE_SHADOW = { 
     // Web (boxShadow) equivalent
     boxShadow: `0 5px 12px 0px rgba(16, 42, 67, 0.15)`,
-    elevation: 5, // RN/Android Fallback
+    // RN (shadow/elevation) fallback
+    shadowColor: BASE_SHADOW_COLOR,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
 }
 const GENEROUS_RADIUS = 30; // Ultra-Rounded corners
 // =================================================================
 
 
+// --- Dummy Data (Used as fallback/structure definition) ---
+const dummyData = [
+  // Example structure (will be replaced by live data)
+  {
+    listingId: '-OfnYnsW2jL3ag4BFu6R', // Ensure dummy data has listingId for testing
+    price: '₹ 50,000/mo',
+    listingGoal: 'Rent',
+    location: 'Bandra West, Mumbai',
+    image: 'https://via.placeholder.com/400x200?text=Vibrant+Dream+Home',
+    rating: '4.8',
+    bhkOrRooms: '3 BHK',
+    totalCarpetAreaSqft: '1500',
+    propertyType: 'Flat',
+    finalAvailableDate: 'Now',
+    isNoBrokerage: true,
+  },
+  {
+    id: '2', // Fallback ID
+    price: '₹ 2 Crore',
+    listingGoal: 'Sale',
+    location: 'Lonavala Hills, Pune',
+    image: 'https://via.placeholder.com/400x200?text=Luxury+Mountain+View',
+    rating: '4.2',
+    bhkOrRooms: '4 BHK',
+    totalCarpetAreaSqft: '5000',
+    propertyType: 'House',
+    finalAvailableDate: 'Feb 2026',
+    isNoBrokerage: false,
+  },
+];
+
+
 // --- Property Listing Card Component ---
-const PropertyListingCard = ({ item, colors, navigation, isMobile }) => {
+const PropertyListingCard = ({ item, colors, navigation }) => {
     
+    // Fallback colors for safety if useTheme is not providing them fully
     const primary = colors.primary || '#FF3366';
     const accent = colors.accent || VIBRANT_ACCENT;
     const card = colors.card || '#FFFFFF';
     const text = colors.text || '#121212';
     const border = colors.border || '#E0E0E0';
     
-    const specPillWidth = isMobile ? '48%' : '23%'; 
-    
-    const dynamicStyles = getDynamicCardStyles({ colors, isMobile });
+    // ✅ FIX: Re-introduce robust handler for ID validation and correct navigation call
+    const handlePress = () => {
+        // Prioritize listingId, fall back to id
+        const propertyIdToNavigate = item.listingId || item.id;
+
+        if (!propertyIdToNavigate) {
+            console.error('Data Integrity Error: Listing item is missing both listingId and id.', item);
+            Alert.alert(
+                'Data Error', 
+                'Listing ID is corrupted or missing for this property. Cannot fetch details.'
+            );
+            return;
+        }
+
+        // 🔥 FIX: Directly navigate to the top-level 'PropertyDetail' screen (App.web.jsx में इसे RootStack में जोड़ा गया है)
+        navigation.navigate('PropertyDetail', { 
+            propertyId: propertyIdToNavigate // Pass the confirmed ID
+        });
+    };
 
     return (
         <TouchableOpacity 
-            style={[dynamicStyles.cardContainer, { backgroundColor: card }, DEEP_SOFT_SHADOW]}
-            onPress={() => navigation.navigate('PropertyDetail', { propertyId: item.listingId || item.id })}
+            style={[styles.cardContainer, { backgroundColor: card }, DEEP_SOFT_SHADOW]}
+            onPress={handlePress} // Use the robust handler
         >
             {/* Property Image */}
             <Image 
                 source={{ uri: item.image || 'https://via.placeholder.com/400x200?text=Placeholder+Image' }} 
-                style={dynamicStyles.cardImage} 
+                style={styles.cardImage} 
                 resizeMode="cover"
             />
             
             {/* Card Header - Elevated Vibrant Ribbon */}
             <View style={[
-                dynamicStyles.cardHeader, 
+                styles.cardHeader, 
                 { 
                     backgroundColor: primary, 
+                    // Enhanced shadow for the ribbon/title bar
                     boxShadow: `0 4px 15px 0px ${primary + 'DD'}`,
                 }
             ]}>
-                <Text style={dynamicStyles.cardHeaderTitle}>{item.listingGoal || 'Property Listing'}</Text>
+                <Text style={styles.cardHeaderTitle}>{item.listingGoal || 'Property Listing'}</Text>
             </View>
 
 
             {/* Card Content */}
-            <View style={dynamicStyles.cardContent}>
+            <View style={styles.cardContent}>
                 
                 {/* Row 1: Price and Type (HIGH-IMPACT STATS) */}
-                <View style={dynamicStyles.priceRow}>
-                    <Text style={[dynamicStyles.cardPrice, { color: accent }]}>{`₹ ${item.price ? item.price.toLocaleString('en-IN') : 'N/A'}`}</Text> 
+                <View style={styles.priceRow}>
+                    {/* Price is big, bold, and Gold */}
+                    <Text style={[styles.cardPrice, { color: accent }]}>{`₹ ${item.price ? item.price.toLocaleString('en-IN') : 'N/A'}`}</Text> 
+                    
+             
                 </View>
 
                 {/* Row 2: Location and Rating */}
-                <View style={dynamicStyles.locationAndRatingRow}>
-                    <View style={dynamicStyles.locationRow}>
-                        <Icon name="locate" size={dynamicStyles.cardLocationIconSize} color={primary} />
-                        <Text style={[dynamicStyles.cardLocation, { color: text, fontWeight: '600' }]}>{item.location || 'Unknown Location'}</Text>
+                <View style={styles.locationAndRatingRow}>
+                    <View style={styles.locationRow}>
+                        <Icon name="locate" size={18} color={primary} />
+                        <Text style={[styles.cardLocation, { color: text, fontWeight: '600' }]}>{item.location || 'Unknown Location'}</Text>
                     </View>
-                    <View style={dynamicStyles.ratingAndVerifiedGroup}>
+                    <View style={styles.ratingAndVerifiedGroup}>
                         {/* Verified Icon (Green Check) */}
                         {item.isNoBrokerage && 
-                            <View style={[dynamicStyles.verifiedPill, { backgroundColor: '#4CAF50', ...SUBTLE_SHADOW }]}>
+                            <View style={[styles.verifiedPill, { backgroundColor: '#4CAF50', ...SUBTLE_SHADOW }]}>
                                 <Icon name="shield-checkmark" size={18} color="#FFF" />
                             </View>
                         }
                         {/* Rating Box - Game UI Stat Look (Gold Star) */}
-                        <View style={[dynamicStyles.ratingBox, { backgroundColor: accent + '20', ...SUBTLE_SHADOW }]}>
+                        <View style={[styles.ratingBox, { backgroundColor: accent + '20', ...SUBTLE_SHADOW }]}>
                             <Icon name="star" size={18} color={accent} />
-                            <Text style={[dynamicStyles.ratingText, { color: text }]}>{item.rating || 'N/A'}</Text>
+                            <Text style={[styles.ratingText, { color: text }]}>{item.rating || 'N/A'}</Text>
                         </View>
                     </View>
                 </View>
 
                 {/* Row 3: Specs (ENHANCED COLORFUL OBJECTS) */}
-                <View style={[dynamicStyles.specsRowEnhanced, { borderTopColor: border }]}>
-                    
-                    {/* Spec 1: BHK / Rooms - Pink/Red Theme (Always visible) */}
-                    <View style={[dynamicStyles.specPillEnhanced, { backgroundColor: primary + '10', width: specPillWidth, ...SUBTLE_SHADOW }]}>
-                        <Icon name="bed-outline" size={dynamicStyles.specIconSize} color={primary} />
-                        <Text style={[dynamicStyles.specTextEnhanced, { color: primary }]}>{item.bhkOrRooms || 'N/A'}</Text>
+                <View style={[styles.specsRowEnhanced, { borderTopColor: border }]}>
+                    {/* Spec 1: BHK / Rooms - Pink/Red Theme */}
+                    <View style={[styles.specPillEnhanced, { backgroundColor: primary + '10', ...SUBTLE_SHADOW }]}>
+                        <Icon name="bed-outline" size={26} color={primary} />
+                        <Text style={[styles.specTextEnhanced, { color: primary }]}>{item.bhkOrRooms || 'N/A'}</Text>
                     </View>
-                    
-                    {/* Spec 2: Carpet Area - Cyan/Blue Theme (Always visible) */}
-                    <View style={[dynamicStyles.specPillEnhanced, { backgroundColor: colors.secondary + '10' /* Cyan */, width: specPillWidth, ...SUBTLE_SHADOW }]}>
-                        <Icon name="expand-outline" size={dynamicStyles.specIconSize} color={colors.secondary || '#00BCD4'} />
-                        <Text style={[dynamicStyles.specTextEnhanced, { color: colors.secondary || '#00BCD4' }]}>{item.totalCarpetAreaSqft || 'N/A'} Sqft</Text>
+                    {/* Spec 2: Carpet Area - Cyan/Blue Theme */}
+                    <View style={[styles.specPillEnhanced, { backgroundColor: colors.secondary + '10' /* Cyan */, ...SUBTLE_SHADOW }]}>
+                        <Icon name="expand-outline" size={26} color={colors.secondary || '#00BCD4'} />
+                        <Text style={[styles.specTextEnhanced, { color: colors.secondary || '#00BCD4' }]}>{item.totalCarpetAreaSqft || 'N/A'} Sqft</Text>
                     </View>
-                    
-                    {/* Spec 3 & 4: (Hidden on Mobile to save space) */}
-                    {!isMobile && (
-                        <>
-                            {/* Spec 3: Property Type - Lime/Green Theme */}
-                            <View style={[dynamicStyles.specPillEnhanced, { backgroundColor: '#8BC34A' + '10' /* Lime */, width: specPillWidth, ...SUBTLE_SHADOW }]}>
-                                <Icon name="home-outline" size={dynamicStyles.specIconSize} color="#8BC34A" />
-                                <Text style={[dynamicStyles.specTextEnhanced, { color: '#8BC34A' }]}>{item.propertyType || 'House'}</Text>
-                            </View>
-                            {/* Spec 4: Availability - Purple/Calendar Theme */}
-                            <View style={[dynamicStyles.specPillEnhanced, { backgroundColor: '#673AB7' + '10' /* Purple */, width: specPillWidth, ...SUBTLE_SHADOW }]}>
-                                <Icon name="calendar-outline" size={dynamicStyles.specIconSize} color="#673AB7" />
-                                <Text style={[dynamicStyles.specTextEnhanced, { color: '#673AB7' }]}>{item.finalAvailableDate || 'Now'}</Text>
-                            </View>
-                        </>
-                    )}
+                    {/* Spec 3: Property Type - Lime/Green Theme */}
+                    <View style={[styles.specPillEnhanced, { backgroundColor: '#8BC34A' + '10' /* Lime */, ...SUBTLE_SHADOW }]}>
+                        <Icon name="home-outline" size={26} color="#8BC34A" />
+                        <Text style={[styles.specTextEnhanced, { color: '#8BC34A' }]}>{item.propertyType || 'House'}</Text>
+                    </View>
+                    {/* Spec 4: Availability - Purple/Calendar Theme */}
+                    <View style={[styles.specPillEnhanced, { backgroundColor: '#673AB7' + '10' /* Purple */, ...SUBTLE_SHADOW }]}>
+                        <Icon name="calendar-outline" size={26} color="#673AB7" />
+                        <Text style={[styles.specTextEnhanced, { color: '#673AB7' }]}>{item.finalAvailableDate || 'Now'}</Text>
+                    </View>
                 </View>
 
             </View>
@@ -170,7 +226,7 @@ const PropertyListing = ({
     houseType, 
     searchText 
 }) => { 
-  const { colors } = useTheme(); 
+  const { colors } = useTheme(); // Use the global theme
   const [listings, setListings] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [windowWidth, setWindowWidth] = useState(Dimensions.get('window').width);
@@ -186,7 +242,6 @@ const PropertyListing = ({
     return () => subscription?.remove();
   }, []);
   
-  // Determine number of columns
   const numColumns = isMobile ? 1 : (isTablet ? 2 : 3);
 
 
@@ -210,7 +265,6 @@ const PropertyListing = ({
     try {
         console.log(`Fetching listings for type: ${listingType} with filters:`, requestBody);
         
-        // --- LIVE API CALL ---
         const response = await fetch(url, {
             method: 'POST', 
             headers: {
@@ -223,24 +277,22 @@ const PropertyListing = ({
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
             Alert.alert('Error Fetching Data', `Could not fetch listings: ${errorData.message || response.statusText}`);
-            setListings([]); 
+            setListings([]);
             return;
         }
 
         const data = await response.json();
         setListings(data.listings || []); 
-        
     } catch (error) {
         console.error('Network or parsing error:', error);
         Alert.alert('Network Error', 'Could not connect to the server or process data.');
-        setListings([]); 
+        setListings(dummyData); // Fallback to dummy data on critical failure
     } finally {
         setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Re-fetch data whenever any dependency changes
     fetchData();
   }, [
     listingType, 
@@ -253,13 +305,11 @@ const PropertyListing = ({
     searchText
   ]); 
   
-  // 🎨 Dynamic Stylesheet Generator
-  const dynamicStyles = getDynamicStyles({ colors, isMobile, isTablet, windowWidth });
-
+  const columnWrapperStyle = numColumns > 1 ? styles.columnWrapper : null;
 
   if (isLoading) {
     return (
-        <View style={dynamicStyles.loadingContainer}>
+        <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={{ color: colors.text, marginTop: 10 }}>Loading {listingType} properties...</Text>
         </View>
@@ -268,7 +318,7 @@ const PropertyListing = ({
 
   if (listings.length === 0) {
     return (
-        <View style={dynamicStyles.loadingContainer}>
+        <View style={styles.loadingContainer}>
             <Icon name="alert-circle-outline" size={30} color={colors.text} />
             <Text style={{ color: colors.text, marginTop: 10, fontSize: 16 }}>No {listingType} listings found. Try adjusting your filters!</Text>
         </View>
@@ -276,7 +326,7 @@ const PropertyListing = ({
   }
 
   return (
-    <View style={[dynamicStyles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={listings}
         keyExtractor={(item) => item.listingId ? item.listingId.toString() : item.id.toString()}
@@ -285,185 +335,172 @@ const PropertyListing = ({
             item={item} 
             colors={colors} 
             navigation={navigation}
-            isMobile={isMobile} 
           />
         )}
         key={numColumns} 
         numColumns={numColumns}
-        // columnWrapperStyle केवल तभी पास करें जब numColumns > 1 हो (Previous Fix)
-        columnWrapperStyle={numColumns > 1 ? dynamicStyles.columnWrapper : null}
-        contentContainerStyle={dynamicStyles.flatListContent}
+        columnWrapperStyle={columnWrapperStyle}
+        contentContainerStyle={styles.flatListContent}
       />
     </View>
   );
 };
 
-// 🎨 Dynamic Stylesheet Generator for Listing Component (Returns plain JS object)
-const getDynamicStyles = ({ colors, isMobile, isTablet, windowWidth }) => {
+// --- Styles (Updated for Disney Aesthetics) ---
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingHorizontal: 0,
+        paddingTop: 10,
+    },
+    flatListContent: {
+        paddingBottom: 40,
+        paddingHorizontal: 10,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: 200,
+    },
+    // --- Card Styles (The Floating Showcase) ---
+    cardContainer: {
+        flex: 1,
+        margin: 15, 
+        borderRadius: GENEROUS_RADIUS, 
+        overflow: 'hidden',
+        borderWidth: 0, 
+        minWidth: 280,
+        // Shadow applied inline
+    },
+    columnWrapper: {
+        justifyContent: 'space-between',
+        marginBottom: 25, // Increased spacing between rows
+    },
+    cardImage: {
+        width: '100%',
+        height: 180, 
+        backgroundColor: '#CCC',
+        // Softer corner transition
+        borderTopLeftRadius: GENEROUS_RADIUS - 5,
+        borderTopRightRadius: GENEROUS_RADIUS - 5,
+    },
+    cardHeader: {
+        position: 'absolute',
+        top: 25, // Lowered ribbon
+        right: 0,
+        left: 0,
+        zIndex: 1,
+        alignSelf: 'center',
+        width: '25%', // Wider, more prominent ribbon
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 15, 
+    },
+    cardHeaderTitle: {
+        color: '#FFF',
+        fontWeight: '900',
+        fontSize: 20, // Very large title
+        textShadowColor: 'rgba(0, 0, 0, 0.5)', // Text shadow for ribbon depth
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+    },
+    cardContent: {
+        padding: 25, // Increased content padding
+    },
+    // ⭐ ROW 1: Price and Type
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    cardPrice: {
+        fontSize: 30, // Most prominent font
+        fontWeight: '900', 
+    },
+    listingGoalPill: {
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+    },
+    listingGoalText: {
+        fontSize: 16, 
+        fontWeight: '900',
+    },
     
-    const MARGIN_SIZE = isMobile ? 10 : 15;
+    // ⭐ ROW 2: Location and Rating
+    locationAndRatingRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingBottom: 15,
+        marginBottom: 15,
+    },
+    locationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    cardLocation: {
+        marginLeft: 10, 
+        fontSize: 16,
+    },
+    ratingAndVerifiedGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    verifiedPill: {
+        padding: 5,
+        borderRadius: 50,
+        marginRight: 15,
+        height: 35, width: 35, // Larger size
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#FFF', // White border for pop
+    },
+    ratingBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 18, // Ultra-rounded box
+    },
+    ratingText: {
+        fontWeight: '900', 
+        marginLeft: 8, 
+        fontSize: 17, // Larger font
+    },
+
+    // ⭐ ROW 3: Specs (ENHANCED COLORFUL OBJECTS)
+    specsRowEnhanced: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingTop: 20,
+      marginTop: 20,
+      borderTopWidth: 1,
+      flexWrap: 'wrap', 
+    },
+    specPillEnhanced: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingVertical: 15, 
+        borderRadius: 20, 
+        width: '23%', 
+        justifyContent: 'center',
+        // Shadow and color applied inline
+    },
+    specTextEnhanced: {
+        marginTop: 8,
+        textAlign: 'center',
+        lineHeight: 16, 
+        fontSize: 14, 
+        fontWeight: '900',
+    },
     
-    return {
-        container: {
-            flex: 1,
-            paddingHorizontal: isMobile ? 0 : 10,
-            paddingTop: 10,
-        },
-        flatListContent: {
-            paddingBottom: 40,
-            paddingHorizontal: isMobile ? 5 : 10, 
-        },
-        loadingContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: 200,
-        },
-        // --- Card Grid / Wrapper Styles ---
-        columnWrapper: {
-            justifyContent: 'space-between',
-            marginBottom: MARGIN_SIZE * 2,
-            gap: MARGIN_SIZE, 
-        },
-    };
-};
-
-// 🎨 Dynamic Stylesheet Generator for Card Component (Returns plain JS object)
-const getDynamicCardStyles = ({ colors, isMobile }) => {
-    const PADDING = isMobile ? 18 : 25;
-    const HEADER_TITLE_SIZE = isMobile ? 16 : 20;
-    const ICON_SIZE = isMobile ? 22 : 26;
-
-    return { 
-        // --- Card Styles (The Floating Showcase) ---
-        cardContainer: {
-            flex: 1,
-            margin: isMobile ? 8 : 15, 
-            borderRadius: GENEROUS_RADIUS, 
-            overflow: 'hidden',
-            borderWidth: 0, 
-            minWidth: 280,
-        },
-        cardImage: {
-            width: '100%',
-            height: isMobile ? 150 : 180, 
-            backgroundColor: '#CCC',
-            borderTopLeftRadius: GENEROUS_RADIUS - 5,
-            borderTopRightRadius: GENEROUS_RADIUS - 5,
-        },
-        cardHeader: {
-            position: 'absolute',
-            top: isMobile ? 15 : 25, 
-            right: 0,
-            left: 0,
-            zIndex: 1,
-            alignSelf: 'center',
-            width: isMobile ? '35%' : '25%', 
-            paddingVertical: isMobile ? 8 : 12,
-            paddingHorizontal: 15,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 15, 
-        },
-        cardHeaderTitle: {
-            color: '#FFF',
-            fontWeight: '900',
-            fontSize: HEADER_TITLE_SIZE, 
-            // 💡 NOTE: RN Web prefers the three separate props, so keeping them 
-            // despite the minor deprecation warning which can often be ignored in hybrid RN projects.
-            textShadowColor: 'rgba(0, 0, 0, 0.5)', 
-            textShadowOffset: { width: 1, height: 1 },
-            textShadowRadius: 2,
-        },
-        cardContent: {
-            padding: PADDING, 
-        },
-        // ⭐ ROW 1: Price and Type
-        priceRow: {
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-            marginBottom: 15,
-        },
-        cardPrice: {
-            fontSize: isMobile ? 24 : 30, 
-            fontWeight: '900', 
-        },
-        
-        // ⭐ ROW 2: Location and Rating
-        locationAndRatingRow: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingBottom: 15,
-            marginBottom: 15,
-        },
-        locationRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            flexShrink: 1, 
-        },
-        cardLocationIconSize: isMobile ? 16 : 18,
-        cardLocation: {
-            marginLeft: 8, 
-            fontSize: isMobile ? 14 : 16,
-            flexShrink: 1,
-        },
-        ratingAndVerifiedGroup: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginLeft: 10,
-        },
-        verifiedPill: {
-            padding: 5,
-            borderRadius: 50,
-            marginRight: 10, 
-            height: 30, width: 30, 
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 2,
-            borderColor: '#FFF', 
-        },
-        ratingBox: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 8,
-            paddingHorizontal: 12, 
-            borderRadius: 18, 
-        },
-        ratingText: {
-            fontWeight: '900', 
-            marginLeft: 5, 
-            fontSize: isMobile ? 15 : 17, 
-        },
-
-        // ⭐ ROW 3: Specs (ENHANCED COLORFUL OBJECTS)
-        specsRowEnhanced: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingTop: isMobile ? 15 : 20,
-          marginTop: isMobile ? 15 : 20,
-          borderTopWidth: 1,
-          flexWrap: 'wrap', 
-        },
-        specPillEnhanced: {
-            flexDirection: 'column',
-            alignItems: 'center',
-            paddingVertical: isMobile ? 10 : 15, 
-            borderRadius: 20, 
-            justifyContent: 'center',
-            marginBottom: isMobile ? 10 : 0, 
-        },
-        specIconSize: ICON_SIZE,
-        specTextEnhanced: {
-            marginTop: 5,
-            textAlign: 'center',
-            lineHeight: 16, 
-            fontSize: isMobile ? 11 : 14, 
-            fontWeight: '900',
-        },
-    };
-};
+});
 
 export default PropertyListing;

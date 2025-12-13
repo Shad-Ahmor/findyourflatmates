@@ -7,8 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../theme/theme';
 import { useAuth } from '../../../context/AuthContext';
 
-// Import Screens (assuming this is correct for your structure)
-import HomeScreen from '../HomeScreen.web.jsx';
+// 🚨 REMOVED: import HomeScreen from '../HomeScreen.web.jsx'; 
+// HomeScreen will now be passed via props in screensMap
 
 // --- CONSTANTS & RESPONSIVENESS ---
 const { width } = Dimensions.get('window');
@@ -26,8 +26,10 @@ const GLASS_STYLE = Platform.select({
 
 // =================================================================
 // 🚀 WebAppHeader (The actual Header Component)
+// 🚨 MODIFIED: अब activeScreenName prop स्वीकार करता है
+// 🔥 FIX: Add 'export' keyword for named export
 // =================================================================
-const WebAppHeader = () => {
+export const WebAppHeader = ({ activeScreenName }) => {
   const navigation = useNavigation();
   const { colors, toggleTheme } = useTheme();
   const { logout } = useAuth();
@@ -38,8 +40,8 @@ const WebAppHeader = () => {
   // Dynamic check
   const isWebOrTablet = width > BREAKPOINT; 
 
-  // यह सुनिश्चित करने के लिए कि width हमेशा करंट रूट नेम प्राप्त करता है (केवल तभी जब मेन कंपोनेंट में उपयोग किया जाता है)
-  const currentRouteName = navigation.getState().routes[navigation.getState().index].name;
+  // 🚨 FIX: activeScreenName prop का उपयोग करें
+  const currentRouteName = activeScreenName; 
 
   // Navigation Links
   const screens = [
@@ -63,12 +65,13 @@ const WebAppHeader = () => {
       });
 
       logout(); // Remove auth context data
-      navigation.navigate("Main");
+      // 💡 FIX: Home पर नेविगेट करें और internal screen parameter को हटा दें
+      navigation.navigate("Main", { screen: undefined }); 
     } catch (err) {
       console.log("Logout Error:", err);
       // Fallback logout for client-side state
       logout();
-      navigation.navigate("Main");
+      navigation.navigate("Main", { screen: undefined });
     }
   };
   
@@ -79,8 +82,16 @@ const WebAppHeader = () => {
 
   // 💡 HELPER: नेविगेट करें और मेनू बंद करें
   const navigateAndCloseMenu = (screenName) => {
-      navigation.navigate(screenName);
+      // 🚨 FIX: Main route पर navigate करें और internal screen name को param के रूप में पास करें
+      // Linking config के कारण यह URL को /Property/ScreenName में बदल देगा।
+      navigation.navigate('Main', { screen: screenName === 'Main' ? undefined : screenName }); 
       setIsMenuOpen(false); // मेनू बंद करें
+  }
+  
+  // 💡 HELPER: नेविगेट करें (External Stack screens के लिए, जैसे Profile)
+  const navigateToExternalScreen = (screenName) => {
+      navigation.navigate(screenName);
+      setIsMenuOpen(false); 
   }
   
   // =================================================================
@@ -120,12 +131,13 @@ const WebAppHeader = () => {
         {Platform.OS === "web" && isWebOrTablet && (
           <View style={hS.navButtons}>
             {screens.map((screen, index) => {
+              // 🚨 FIX: currentRouteName (activeScreenName) का उपयोग करें
               const isActive = screen.name === currentRouteName;
 
               return (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => navigation.navigate(screen.name)}
+                  onPress={() => navigateAndCloseMenu(screen.name)}
                   style={[
                     hS.navButton,
                     {
@@ -170,7 +182,7 @@ const WebAppHeader = () => {
 
           {/* Profile */}
           <TouchableOpacity
-            onPress={() => navigateAndCloseMenu("FlatmateSetup")} // Menu close added here too
+            onPress={() => navigateToExternalScreen("FlatmateSetup")} // External screen, use simple navigation
             style={[hS.circleButton, { backgroundColor: colors.backgroundLight }]}
           >
             <Icon name="person-circle-outline" size={isWebOrTablet ? 28 : 26} color={colors.primary} />
@@ -244,20 +256,48 @@ const WebAppHeader = () => {
 
 
 // ================================
-// MAIN SCREEN WRAPPER
+// MAIN SCREEN WRAPPER (WebHeader / WebMainScreen)
+// 🚨 MODIFIED: अब screensMap prop स्वीकार करता है और डायनामिक रूप से कंटेंट रेंडर करता है
 // ================================
-const WebHeader = ({ navigation, route }) => {
+const WebHeader = ({ navigation, route, screensMap }) => {
   const { colors } = useTheme();
   const mS = getMainStyles(colors);
+
+  // 1. Determine the currently requested internal screen from route params
+  // Default to 'Main' (which maps to HomeScreen in AUTH_SCREENS_MAP)
+  const currentInternalScreenName = route.params?.screen || 'Main';
+  
+  // 2. Get the Component from the map
+  const ContentComponent = screensMap?.[currentInternalScreenName];
+  
+  // 3. Dynamic content rendering function
+  const renderContent = () => {
+      if (!ContentComponent) {
+          // Fallback message for an invalid screen name
+          return (
+            <View style={{ padding: 50, alignItems: 'center' }}>
+                <Text style={{ color: colors.error, fontSize: 20, fontWeight: 'bold' }}>
+                    Error: Screen "{currentInternalScreenName}" not found.
+                </Text>
+                <Text style={{ color: colors.text }}>Please navigate back to the home screen.</Text>
+            </View>
+          );
+      }
+      // 🚨 FIX: Pass standard navigation/route props to the dynamically loaded content component
+      return <ContentComponent navigation={navigation} route={route} />;
+  }
+
 
   return (
     <View style={[mS.wrapper, { backgroundColor: colors.background }]}>
       <View style={mS.headerWrapper}>
-        <WebAppHeader />
+        {/* 🚨 FIX: Pass the active screen name down to WebAppHeader for correct highlighting */}
+        <WebAppHeader activeScreenName={currentInternalScreenName} />
       </View>
 
       <ScrollView contentContainerStyle={mS.scrollContainer}>
-        <HomeScreen navigation={navigation} route={route} />
+        {/* 🚨 FIX: Replaced fixed <HomeScreen /> with dynamic content renderer */}
+        {renderContent()}
       </ScrollView>
     </View>
   );
@@ -266,6 +306,7 @@ const WebHeader = ({ navigation, route }) => {
 
 // ==================================================
 // 🌈 STYLES (Dynamic/Responsive)
+// ... (STYLES REMAIN UNCHANGED FROM YOUR SNIPPET) ...
 // ==================================================
 const getHeaderStyles = (colors, isWebOrTablet) => {
     // Dynamic values
@@ -284,7 +325,7 @@ const getHeaderStyles = (colors, isWebOrTablet) => {
           alignItems: "center",
           // 💡 FIX: Web में space-between, Mobile में flex-start और gap का उपयोग
           justifyContent: isWebOrTablet ? "space-between" : "flex-start", 
-          gap: isWebOrTablet ? 0 : MOBILE_GAP, // Mobile में gap जोड़ें
+          gap: isWebOrTablet ? 0 : MOBILE_GAP, // Mobile में gap जोड़ें
           paddingVertical: PADDING_V,
           paddingHorizontal: PADDING_H,
           borderRadius: BORDER_RADIUS,
@@ -425,4 +466,4 @@ const getMainStyles = (colors) =>
     },
   });
 
-export default WebHeader;
+export default WebHeader

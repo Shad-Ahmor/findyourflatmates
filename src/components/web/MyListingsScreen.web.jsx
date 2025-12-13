@@ -17,7 +17,7 @@ import {
 // Note: Using Ionicons for consistency with the Disney-style UI (FontAwesome5 is fine too, but Ionicons offers more filled styles)
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { Shadow } from 'react-native-shadow-2'; // Shadow is crucial for 3D look
-import ListingFormScreen from './ListingFormScreen.web.jsx'; 
+import ListingFormScreen from './PropertyListing/ListingFormScreen.web'; 
 import { API_BASE_URL } from '@env'; 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 

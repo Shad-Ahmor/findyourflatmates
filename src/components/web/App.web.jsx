@@ -16,6 +16,7 @@ import PrivacyPolicyScreen from '../../../src/screens/PrivacyPolicyScreen.jsx';
 import TermsScreen from '../../../src/screens/TermsScreen.jsx';
 
 // Web Navigation/Header
+// WebAppHeader अब WebHeader.web.jsx से ठीक से आयात होगा
 import WebMainScreen, { WebAppHeader } from './navigation/WebHeader'; 
 
 // Web Screen Components (Require Logic)
@@ -23,18 +24,31 @@ const LoginScreenComponent = require('./LoginScreen.web.jsx').default;
 const SignupScreenComponent = require('./SignupScreen.web.jsx').default;
 const BasicDetailForm = require('./BasicDetailForm.web.jsx').default;
 const LandingScreenComponent = require('./LandingScreen.web.jsx').default; 
-const ListingFormScreenComponent = require('./ListingFormScreen.web.jsx').default; 
+const HomeScreen = require('./HomeScreen.web.jsx').default; 
+
+// Main App Screens (These will be rendered inside WebMainScreen)
+const ListingFormScreenComponent = require('./PropertyListing/ListingFormScreen.web.jsx').default; 
 const MyListingsScreenComponent = require('./MyListingsScreen.web.jsx').default;
-const PropertyDetailScreen = require('./PropertyDetailScreen.web.jsx').default; 
+const PropertyDetailScreen = require('./PropertyDetail/PropertyDetailScreen.web.jsx').default; 
 const MessagingScreen = require('./MessagingScreen.web.jsx').default;
 const ChatScreen = require('./ChatScreen.web.jsx').default; 
 
 
 // ======================================================
+// 📌 AUTHENTICATED SCREEN MAP (Internal Routing)
+// ======================================================
+const AUTH_SCREENS_MAP = {
+  Main: HomeScreen, 
+  MessagingList: MessagingScreen,
+  CreateListing: ListingFormScreenComponent,
+  MyListings: MyListingsScreenComponent,
+};
+
+// ======================================================
 // 📌 Linking Configuration for Web URLs
 // ======================================================
 const linking = {
-  prefixes: ['/'], 
+  prefixes: ['http://localhost:8081', '/'], 
   config: {
     screens: {
       Landing: '',
@@ -44,13 +58,13 @@ const linking = {
       BasicDetails: 'BasicDetails',
       Privacy: 'Privacy', 
       Terms: 'Terms',
-      Main: 'Property', 
+      Main: 'Property/:screen?',
       FlatmateSetup: 'FlatmateSetup',
       MessagingList: 'MessagingList',
       FlatmateChat: 'FlatmateChat',
       CreateListing: 'CreateListing',
       MyListings: 'MyListings',
-      PropertyDetail: 'PropertyDetail',
+      PropertyDetail: 'PropertyDetail', 
       Logout: 'Logout',
     },
   },
@@ -85,61 +99,61 @@ function RootStack() {
     >
       {isAuthenticated ? (
         <>
+          {/* Main screen uses WebMainScreen as its wrapper */}
           <Stack.Screen 
             name="Main" 
-            component={WebMainScreen} 
+            component={(props) => <WebMainScreen {...props} screensMap={AUTH_SCREENS_MAP} />}
             options={{ headerShown: false }}
           />
-        <Stack.Screen 
+
+          {/* PropertyDetail Screen with Custom Header */}
+          <Stack.Screen 
+            name="PropertyDetail" 
+            component={PropertyDetailScreen} 
+            options={{ 
+              header: () => <WebAppHeader activeScreenName="Main" />,
+              headerShown: true, 
+              headerTitle: '',
+            }}
+          />
+          
+          {/* Custom Header for Privacy, Terms, and FlatmateSetup */}
+          <Stack.Screen 
             name="Privacy" 
             component={PrivacyPolicyScreen} 
-            options={{ header: WebAppHeader, headerShown: false, title: 'Privacy Policy' }}
+            options={{ 
+                header: () => <WebAppHeader activeScreenName="Main" />, 
+                headerShown: true, 
+                headerTitle: '',
+            }}
           />
           <Stack.Screen 
             name="Terms" 
             component={TermsScreen} 
-            options={{ header: WebAppHeader, headerShown: false, title: 'Terms of Service' }}
+            options={{ 
+                header: () => <WebAppHeader activeScreenName="Main" />, 
+                headerShown: true, 
+                headerTitle: '',
+            }}
           />
-        
-          
           <Stack.Screen
             name="FlatmateSetup"
             component={FlatmateProfileSetupScreen}
-            options={{ header: WebAppHeader, headerShown: false, title: '' }}
+            options={{ 
+                header: () => <WebAppHeader activeScreenName="Main" />, 
+                headerShown: true, 
+                headerTitle: '',
+            }}
           />
 
-          <Stack.Screen 
-            name="MessagingList" 
-            component={MessagingScreen} 
-            options={{ header: WebAppHeader, headerShown: false, title: '' }}
-          /> 
-
+          {/* FlatmateChat and Logout */}
           <Stack.Screen name="FlatmateChat" component={ChatScreen} options={{ headerShown: false }} /> 
-
-          <Stack.Screen
-            name="CreateListing"
-            component={ListingFormScreenComponent}
-            options={{ header: WebAppHeader, headerShown: false, title: 'List Your Space' }}
-          />
-
-          <Stack.Screen
-            name="MyListings"
-            component={MyListingsScreenComponent}
-            options={{ header: WebAppHeader, headerShown: false, title: 'My Properies' }}
-          />
-
-          <Stack.Screen 
-            name="PropertyDetail" 
-            component={PropertyDetailScreen} 
-            options={{ header: WebAppHeader, headerShown: false, title: '' }}
-          /> 
 
           <Stack.Screen 
             name="Logout" 
             component={LogoutScreen} 
             options={{ headerShown: false }} 
           />
-
         </>
       ) : (
         <>
@@ -179,8 +193,6 @@ function RootStack() {
             component={ForgotPasswordScreen} 
             options={{ headerShown: false }} 
           />
-
-          
         </>
       )}
     </Stack.Navigator>

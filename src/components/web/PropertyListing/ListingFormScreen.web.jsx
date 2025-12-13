@@ -12,16 +12,29 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  // Added LayoutAnimation for smooth step transitions on mobile/RN platforms
   LayoutAnimation, 
   UIManager,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons'; 
-import { useTheme } from '../../theme/theme'; 
-import { API_BASE_URL } from '@env'; // ⬅️ .env से इम्पोर्ट करें
+import { useTheme } from '../../../theme/theme'; 
+import { API_BASE_URL } from '@env'; 
+
+// Stepper Components Import
+import Stepper from './Stepper';
+import Step1GoalType from './Step1GoalType';
+import Step2LocationPricing from './Step2LocationPricing';
+// 🚨 NEW STEP IMPORT
+import Step3PropertyDetails from './Step3PropertyDetails'; 
+// 🚨 RENAMED IMPORTS (Steps renumbered)
+import Step4FurnishingAmenities from './Step4FurnishingAmenities'; 
+import Step5DescriptionRequirements from './Step5DescriptionRequirements'; 
+import Step6Images from './Step6Images'; 
+// ✅ NEW STEP IMPORT
+import Step7ProximityPOI from './Step7ProximityPOI'; 
+
 // Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+if (Platform.OS === 'android' && UIManager.setLayoutLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutLayoutAnimationEnabledExperimental(true);
 }
 
 
@@ -37,7 +50,8 @@ const LISTING_ENDPOINT = `${BASE_API_URL}/flatmate/listing`;
 // -----------------------------------------------------------------
 
 // --- VIBRANT COLORS (Deep Sapphire & Vibrant Coral Theme) ---
-const COLORS = {
+// Exported for use in Step components
+export const COLORS = { 
     primaryCTA: '#FF5733',        // Vibrant Coral/Red-Orange (CTA/Highlight)
     secondaryTeal: '#00A9A5',     // Deep Teal/Turquoise (Accent/Glow)
     headerBlue: '#1565C0',         // Deep Sapphire Blue (Titles/Main brand color)
@@ -50,11 +64,11 @@ const COLORS = {
     focusGlow: '#1565C040',        // Light Sapphire for input focus ring
 };
 
-const GENEROUS_RADIUS = 30; // Ultra-rounded corners for cards and buttons
-const ANIMATION_DURATION = '0.3s'; // Global transition speed for smooth UI
+export const GENEROUS_RADIUS = 30; // Ultra-rounded corners for cards and buttons
+export const ANIMATION_DURATION = '0.3s'; // Global transition speed for smooth UI
 
 // --- COLORFUL 3D SHADOW EFFECTS (Updated with new colors) ---
-const DEEP_SOFT_SHADOW = {
+export const DEEP_SOFT_SHADOW = {
     // Web (boxShadow) equivalent for a deep, soft lift (Stronger and deeper)
     boxShadow: `0 20px 40px rgba(30, 41, 59, 0.3), 0 0 20px 8px ${COLORS.secondaryTeal}60`, 
     shadowColor: COLORS.textDark,
@@ -64,7 +78,7 @@ const DEEP_SOFT_SHADOW = {
     elevation: 20,
 };
 
-const SUBTLE_SHADOW = { 
+export const SUBTLE_SHADOW = { 
     // Web (boxShadow) equivalent for pills/selectors
     boxShadow: `0 5px 10px rgba(30, 41, 59, 0.15), 0 0 5px 2px ${COLORS.headerBlue}30`,
     shadowColor: COLORS.textDark,
@@ -74,7 +88,7 @@ const SUBTLE_SHADOW = {
     elevation: 6,
 }
 
-const CTA_SHADOW = {
+export const CTA_SHADOW = {
     // Web (boxShadow) equivalent for CTA pop (Coral saturation)
     boxShadow: `0 10px 20px ${COLORS.primaryCTA}70, 0 0 15px 4px ${COLORS.primaryCTA}50`,
     shadowColor: COLORS.primaryCTA,
@@ -86,77 +100,53 @@ const CTA_SHADOW = {
 // -----------------------------------------------------------------
 
 
-// --- FORM STEPS DEFINITION (Retained) ---
-const STEPS = [
+// --- FORM STEPS DEFINITION (UPDATED: 6 -> 7 steps) ---
+export const STEPS = [
     { id: 1, title: "Goal & Property Type", icon: 'home-outline' },
     { id: 2, title: "Location & Pricing", icon: 'pin-outline' },
-    { id: 3, title: "Furnishing & Amenities", icon: 'tv-outline' },
-    { id: 4, title: "Description & Requirements", icon: 'document-text-outline' },
-    { id: 5, title: "Property Images", icon: 'image-outline' },
+    // 🚨 NEW STEP
+    { id: 3, title: "Property Details", icon: 'build-outline' }, 
+    // 🚨 RENUMBERED STEPS
+    { id: 4, title: "Furnishing & Amenities", icon: 'tv-outline' },
+    { id: 5, title: "Description & Requirements", icon: 'document-text-outline' },
+    { id: 6, title: "Property Images", icon: 'image-outline' },
+    // ✅ NEW STEP 7
+    { id: 7, title: "Proximity & POI", icon: 'location-outline' },
 ];
 
 
-// --- STATIC DATA (Retained) ---
-const listingGoals = ['Rent', 'Sale', 'Flatmate'];
-const propertyTypeData = {
+// --- STATIC DATA (Retained and Exported, NEW data added) ---
+export const listingGoals = ['Rent', 'Sale', 'Flatmate'];
+export const propertyTypeData = {
     Rent: ['Flat', 'PG', 'Hostel', 'House'],
     Sale: ['Flat', 'House', 'Plot'],
     Flatmate: ['Shared Flatmate'],
 };
-const furnishingItems = {
+export const furnishingItems = {
     'Fully Furnished': ['Beds', 'Sofa/Seating', 'TV', 'Refrigerator', 'Washing Machine', 'Microwave', 'AC'],
     'Semi-Furnished': ['Wardrobes', 'Kitchen Cabinets', 'Basic Lights/Fans', 'Geyser'],
     'Unfurnished': ['Only basic fixtures (lights, fans)'],
 };
-const amenities = ['Wifi', 'Parking', 'Gym', 'Balcony', 'AC', 'Security', 'Lift', '24x7 Water'];
-const preferredGenders = ['Male', 'Female', 'Any'];
-const preferredOccupations = ['IT Professional', 'Student', 'Working Professional', 'Other'];
-const availableDates = ['Now', 'Next Week', 'Next Month', 'Custom Date'];
-const propertySizes = ['1 RK', '1 BHK', '2 BHK', '3 BHK', '4+ BHK']; 
-const negotiationMargins = ['0', '5', '10', '15', '20']; 
 
+// 🚨 UPDATED AMENITIES LIST
+export const amenities = [
+    'Wifi', 'Parking', 'Gym', 'Balcony', 
+    'AC', 'Lift', 'Gas pipeline', 'Water connection', 'Security', '24x7 Water'
+]; 
+export const preferredGenders = ['Male', 'Female', 'Any'];
+export const preferredOccupations = ['IT Professional', 'Student', 'Working Professional', 'Other'];
+export const availableDates = ['Now', 'Next Week', 'Next Month', 'Custom Date'];
+export const propertySizes = ['1 RK', '1 BHK', '2 BHK', '3 BHK', '4+ BHK']; 
+export const negotiationMargins = ['0', '5', '10', '15', '20']; 
 
-// -----------------------------------------------------------------
-// 🎨 Stepper Component (ENHANCED for Active Glow with new color)
-// -----------------------------------------------------------------
-const Stepper = ({ currentStep, steps, onStepPress }) => (
-    <View style={styles.stepperContainer}>
-        {steps.map((step, index) => (
-            <React.Fragment key={step.id}>
-                <TouchableOpacity 
-                    style={[
-                        styles.stepPill,
-                        // Active pill gets the pulsating glow effect
-                        step.id === currentStep && styles.stepPillActiveGlow, 
-                        step.id < currentStep && styles.stepPillCompleted,
-                        SUBTLE_SHADOW // Subtle lift for each pill
-                    ]}
-                    onPress={() => onStepPress(step.id)} 
-                    disabled={step.id > currentStep} 
-                >
-                    <Icon 
-                        name={step.icon} 
-                        size={18} 
-                        color={step.id <= currentStep ? COLORS.cardBackground : COLORS.headerBlue} 
-                    />
-                    <Text style={[
-                        styles.stepTitle, 
-                        step.id <= currentStep && styles.stepTitleActive
-                    ]}>
-                        {step.title}
-                    </Text>
-                </TouchableOpacity>
-                {index < steps.length - 1 && (
-                    <View style={[
-                        styles.stepLine,
-                        step.id < currentStep && styles.stepLineCompleted,
-                    ]} />
-                )}
-            </React.Fragment>
-        ))}
-    </View>
-);
-// -----------------------------------------------------------------
+// 🚨 NEW CONSTANTS FOR STEP 3
+export const ownershipTypes = ['Freehold', 'Leasehold', 'Co-operative Society', 'Other'];
+export const facingOptions = ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
+export const parkingOptions = ['1 Car', '2 Cars', 'Bike Only', 'None'];
+export const flooringTypes = ['Vitrified Tiles', 'Marble', 'Wooden Flooring', 'Ceramic Tiles', 'Mosaic', 'Concrete'];
+
+// ✅ NEW CONSTANTS FOR STEP 7
+export const DISTANCE_UNITS = ['km', 'meter', 'min walk'];
 
 
 // =================================================================
@@ -176,7 +166,7 @@ const ListingFormScreen = ({ listingId, onClose }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [toastMessage, setToastMessage] = useState(null); 
     
-    // Core Property Details
+    // Core Property Details (Steps 1 & 2)
     const [goal, setGoal] = useState(listingGoals[0]);
     const [propertyType, setPropertyType] = useState(propertyTypeData[listingGoals[0]][0]);
     const [city, setCity] = useState('');
@@ -188,42 +178,79 @@ const ListingFormScreen = ({ listingId, onClose }) => {
     const [bathrooms, setBathrooms] = useState('1'); 
     const [isBrokerageFree, setIsBrokerageFree] = useState(false);
     
-    // Availability & Occupancy
+    // 🚩 NEW ADDRESS FIELDS FOR STEP 2 (Pincode, Flat No., State)
+    const [pincode, setPincode] = useState('');
+    const [flatNumber, setFlatNumber] = useState('');
+    const [stateName, setStateName] = useState('');
+    const [districtName, setDistrictName] = useState('');
+    // 🚨 NEW STATE FOR STEP 3
+    const [buildingAge, setBuildingAge] = useState('');
+    const [ownershipType, setOwnershipType] = useState(ownershipTypes[0]); 
+    const [maintenanceCharges, setMaintenanceCharges] = useState('');
+    const [facing, setFacing] = useState(facingOptions[0]); 
+    const [parking, setParking] = useState(parkingOptions[0]); 
+    const [gatedSecurity, setGatedSecurity] = useState(true); // Default Yes
+    const [flooringType, setFlooringType] = useState([]); // Multiple choice
+    const [nearbyLocation, setNearbyLocation] = useState(''); // Note: Area in Step 2 includes street/nearby location, this can be used for more specific details
+
+    // Availability & Occupancy (Step 4)
     const [availableDate, setAvailableDate] = useState(availableDates[0]);
     const [currentOccupants, setCurrentOccupants] = useState('');
 
-    // Furnishing & Amenities
+    // Furnishing & Amenities (Step 4)
     const [furnishingType, setFurnishingType] = useState('Unfurnished');
     const [selectedAmenities, setSelectedAmenities] = useState([]);
     
-    // Negotiation Details
+    // Negotiation Details (Step 5)
     const [maxNegotiablePrice, setMaxNegotiablePrice] = useState(''); 
     const [negotiationMargin, setNegotiationMargin] = useState(negotiationMargins[1]);
     
-    // Requirements 
+    // Requirements (Step 5)
     const [preferredGender, setPreferredGender] = useState(preferredGenders[2]);
     const [preferredOccupation, setPreferredOccupation] = useState(preferredOccupations[0]);
     const [preferredWorkLocation, setPreferredWorkLocation] = useState('');
 
-    // Image Handling
+    // Image Handling (Step 6)
     const [currentImageLink, setCurrentImageLink] = useState('');
     const [imageLinks, setImageLinks] = useState([]);
+
+    // ✅ NEW STATE FOR STEP 7 (Proximity & POI)
+    const [transitPoints, setTransitPoints] = useState([]);
+    const [essentialPoints, setEssentialPoints] = useState([]);
+    const [utilityPoints, setUtilityPoints] = useState([]);
     
     const isEditing = !!listingId; 
 
     // --- Navigation Handlers (ENHANCED with LayoutAnimation) ---
+    const showToast = (message, type = 'success') => {
+        setToastMessage({ message, type });
+        setTimeout(() => setToastMessage(null), 4000);
+    };
+    
     const handleNext = () => {
         // Basic validation before moving to next step
         if (currentStep === 1 && (!goal || !propertyType)) {
             showToast("Please select Goal and Property Type.", 'error');
             return;
         }
-        if (currentStep === 2 && (!city || !area || !rent || !deposit || !bedrooms || !bathrooms)) {
-            showToast("Please fill all Location and Pricing details.", 'error');
+        // 🚩 UPDATED VALIDATION FOR STEP 2
+        if (currentStep === 2 && (!city || !area || !rent || !deposit || !bedrooms || !bathrooms || !pincode || !stateName || !flatNumber)) {
+            showToast("Please fill all Location (Flat No., Pincode, State) and Pricing details.", 'error');
+            return;
+        }
+        // 🚨 NEW VALIDATION FOR STEP 3
+        if (currentStep === 3 && (!buildingAge || !ownershipType || !maintenanceCharges || !facing || !parking || flooringType.length === 0)) {
+            showToast("Please fill all Property Details including Age and select at least one Flooring type.", 'error');
+            return;
+        }
+        // 🚩 STEP 6 Validation (before moving to new final Step 7)
+        if (currentStep === 6 && imageLinks.length < 3) {
+            showToast("Please upload at least 3 property images.", 'error');
             return;
         }
         
-        if (currentStep < STEPS.length) {
+        // Update check for the new last step (7)
+        if (currentStep < STEPS.length) { 
             // Apply a simple transition for smoother step change
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setCurrentStep(prev => prev + 1);
@@ -254,11 +281,6 @@ const ListingFormScreen = ({ listingId, onClose }) => {
     };
 
     // --- Other Handlers (Simplified for brevity) ---
-    const showToast = (message, type = 'success') => {
-        setToastMessage({ message, type });
-        setTimeout(() => setToastMessage(null), 4000);
-    };
-
     const handleGoalChange = (newGoal) => {
         setGoal(newGoal);
         setPropertyType(propertyTypeData[newGoal][0]);
@@ -266,6 +288,11 @@ const ListingFormScreen = ({ listingId, onClose }) => {
     
     const handleAmenityToggle = (amenity) => {
         setSelectedAmenities(prev => prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity] );
+    };
+
+    // 🚨 NEW HANDLER for Flooring
+    const handleFlooringToggle = (floor) => {
+        setFlooringType(prev => prev.includes(floor) ? prev.filter(f => f !== floor) : [...prev, floor] );
     };
     
     const handleAddImage = () => {
@@ -283,248 +310,109 @@ const ListingFormScreen = ({ listingId, onClose }) => {
         setImageLinks(prev => prev.filter(url => url !== urlToRemove));
     };
 
+    // ✅ FIX: Implemented actual fetch API call
     const handleSubmit = async () => {
+        // FINAL VALIDATION (Check Step 6/Images)
         if (imageLinks.length < 3) {
             Alert.alert("Incomplete Form", "Please upload at least 3 property images.");
             return;
         }
 
+
+        const locationString = [
+            flatNumber,
+            area,
+            city,
+            districtName,
+            stateName,
+            pincode,
+        ].filter(Boolean).join(', ');
+
         setIsLoading(true);
         setToastMessage(null);
 
-        // ... API Submission Logic ... 
         const payload = {
             listing_goal: goal,
-            // ... other fields
+            property_type: propertyType,
+            location: locationString,
+            city,
+            area,
+            rent: Number(rent) || 0, // Convert to number
+            deposit: Number(deposit) || 0, // Convert to number
+            description,
+            bedrooms,
+            bathrooms: Number(bathrooms) || 0, // Convert to number
+            is_brokerage_free: isBrokerageFree,
+            // ADDRESS FIELDS
+            pincode,
+            flat_number: flatNumber,
+            state_name: stateName,
+            districtName: districtName,
+            // STEP 3 FIELDS
+            building_age: Number(buildingAge) || 0, // Convert to number
+            ownership_type: ownershipType,
+            maintenance_charges: Number(maintenanceCharges) || 0, // Convert to number
+            facing: facing,
+            parking: parking,
+            gated_security: gatedSecurity,
+            flooring_type: flooringType,
+            nearby_location: nearbyLocation,
+            // STEP 4 FIELDS
+            available_date: availableDate,
+            current_occupants: Number(currentOccupants) || 0, // Convert to number
+            furnishing_type: furnishingType,
+            amenities: selectedAmenities,
+            // STEP 5 FIELDS
+            max_negotiable_price: Number(maxNegotiablePrice) || 0, // Convert to number
+            negotiation_margin: negotiationMargin,
+            preferred_gender: preferredGender,
+            preferred_occupation: preferredOccupation,
+            preferred_work_location: preferredWorkLocation,
+            // STEP 6 FIELD
+            image_links: imageLinks,
+            // STEP 7 FIELDS
+            transit_points: transitPoints,
+            essential_points: essentialPoints,
+            utility_points: utilityPoints,
         };
-        // Mock success response
-        setTimeout(() => {
+        
+        console.log("Submitting Payload:", payload);
+
+        try {
+            const response = await fetch(LISTING_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // यदि आपके API को प्रमाणीकरण (Authentication) की आवश्यकता है, तो यहां 'Authorization' हेडर जोड़ें
+                    // 'Authorization': 'Bearer YOUR_AUTH_TOKEN',
+                },
+                body: JSON.stringify(payload),
+                credentials: 'include',
+
+            });
+
+            // API से JSON डेटा पढ़ें
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log("API Response Data:", data);
+                // मान लें कि API listing ID लौटाता है
+                showToast(`✅ Listing ${isEditing ? 'updated' : 'submitted'} successfully! Listing ID: ${data.id || 'N/A'}`, 'success');
+                if (onClose) onClose(); 
+            } else {
+                // non-200 responses (e.g., 400, 500) को हैंडल करें
+                const errorDetail = data.message || data.error || response.statusText || 'Unknown error occurred on server.';
+                // एक सामान्य त्रुटि (Generic error) फेंकें जिसे catch ब्लॉक पकड़ लेगा
+                throw new Error(errorDetail); 
+            }
+
+        } catch (error) {
+            console.error("API Submission Error:", error);
+            showToast(`❌ Error submitting form: ${error.message}`, 'error');
+        } finally {
             setIsLoading(false);
-            showToast(`✅ Listing ${isEditing ? 'updated' : 'submitted'} successfully!`, 'success');
-            if (onClose) onClose(); 
-        }, 2000);
+        }
     };
-
-    // --- Render Helpers (Modified for Interactive Animation) ---
-
-    const renderGoalSelector = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>Listing Goal</Text>
-            <View style={styles.selectorContainer}>
-                {listingGoals.map(g => (
-                    <TouchableOpacity 
-                        key={g} 
-                        style={[
-                            styles.selectorButton, 
-                            g === goal && styles.selectorButtonActive,
-                            SUBTLE_SHADOW 
-                        ]} 
-                        onPress={() => handleGoalChange(g)}
-                        disabled={isLoading}
-                    >
-                        <Text style={g === goal ? styles.selectorTextActive : styles.selectorText}>{g}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-        </View>
-    );
-
-    const renderPropertyTypeSelector = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>Property Type</Text>
-            <View style={styles.selectorContainer}>
-                {propertyTypeData[goal].map(type => (
-                    <TouchableOpacity 
-                        key={type} 
-                        style={[
-                            styles.selectorButton, 
-                            propertyType === type && styles.selectorButtonActive,
-                            SUBTLE_SHADOW
-                        ]} 
-                        onPress={() => setPropertyType(type)}
-                        disabled={isLoading}
-                    >
-                        <Text style={propertyType === type ? styles.selectorTextActive : styles.selectorText}>{type}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-        </View>
-    );
-
-    const renderPropertyDetails = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>BHK Type & Bathrooms</Text>
-            <View style={styles.inputRow}>
-                {/* Bedrooms (BHK Type) */}
-                <View style={[styles.inputGroup, styles.inputHalf]}>
-                    <Text style={styles.labelSmall}>BHK Type</Text>
-                    <View style={styles.selectorContainerSmall}>
-                        {propertySizes.map(size => (
-                            <TouchableOpacity 
-                                key={size} 
-                                style={[
-                                    styles.selectorButtonTiny, 
-                                    bedrooms === size && styles.selectorButtonActive,
-                                    SUBTLE_SHADOW
-                                ]} 
-                                onPress={() => setBedrooms(size)}
-                                disabled={isLoading}
-                            >
-                                <Text style={bedrooms === size ? styles.selectorTextActive : styles.selectorText}>{size}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-                {/* Bathrooms */}
-                <View style={[styles.inputGroup, styles.inputHalf]}>
-                    <Text style={styles.labelSmall}>Bathrooms</Text>
-                    <TextInput 
-                        style={styles.textInput} 
-                        value={bathrooms}
-                        onChangeText={setBathrooms}
-                        keyboardType="numeric"
-                        placeholder="e.g., 2"
-                        editable={!isLoading}
-                    />
-                </View>
-            </View>
-        </View>
-    );
-
-    const renderFurnishingSelector = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>Furnishing Status</Text>
-            <View style={styles.selectorContainer}>
-                {Object.keys(furnishingItems).map(key => (
-                    <TouchableOpacity 
-                        key={key} 
-                        style={[
-                            styles.selectorButton, 
-                            furnishingType === key && styles.selectorButtonActive,
-                            SUBTLE_SHADOW
-                        ]} 
-                        onPress={() => setFurnishingType(key)}
-                        disabled={isLoading}
-                    >
-                        <Text style={furnishingType === key ? styles.selectorTextActive : styles.selectorText}>{key}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-            <Text style={styles.helperText}>
-                Includes: {furnishingItems[furnishingType].join(', ')}
-            </Text>
-        </View>
-    );
-
-    const renderAmenities = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>Key Amenities</Text>
-            <View style={styles.amenityContainer}>
-                {amenities.map(amenity => (
-                    <TouchableOpacity
-                        key={amenity}
-                        style={[
-                            styles.toggleButton,
-                            selectedAmenities.includes(amenity) && styles.toggleButtonActive,
-                            SUBTLE_SHADOW
-                        ]}
-                        onPress={() => handleAmenityToggle(amenity)}
-                        disabled={isLoading}
-                    >
-                        <Icon 
-                            name={selectedAmenities.includes(amenity) ? 'checkmark-circle' : 'add-circle-outline'} 
-                            size={18} 
-                            color={selectedAmenities.includes(amenity) ? COLORS.cardBackground : COLORS.textDark} 
-                            style={{ marginRight: 5 }}
-                        />
-                        <Text style={selectedAmenities.includes(amenity) ? styles.toggleTextActive : styles.toggleText}>
-                            {amenity}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-        </View>
-    );
-
-    const renderNegotiationMargin = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.labelSmall}>Negotiation Margin (%)</Text>
-            <View style={styles.selectorContainerSmall}>
-                {negotiationMargins.map(margin => (
-                    <TouchableOpacity 
-                        key={margin} 
-                        style={[
-                            styles.selectorButtonTiny, 
-                            negotiationMargin === margin && styles.selectorButtonActive,
-                            SUBTLE_SHADOW
-                        ]} 
-                        onPress={() => setNegotiationMargin(margin)}
-                        disabled={isLoading}
-                    >
-                        <Text style={negotiationMargin === margin ? styles.selectorTextActive : styles.selectorText}>{margin}%</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-        </View>
-    );
-
-    const renderOccupationSelector = () => (
-        <View style={styles.selectorContainerSmall}>
-            {preferredOccupations.map(occ => (
-                <TouchableOpacity 
-                    key={occ} 
-                    style={[
-                        styles.selectorButtonSmall, 
-                        preferredOccupation === occ && styles.selectorButtonActive,
-                        SUBTLE_SHADOW
-                    ]} 
-                    onPress={() => setPreferredOccupation(occ)}
-                    disabled={isLoading}
-                >
-                    <Text style={preferredOccupation === occ ? styles.selectorTextActive : styles.selectorText}>{occ}</Text>
-                </TouchableOpacity>
-            ))}
-        </View>
-    );
-
-    const renderImages = () => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>Property Images</Text>
-            <Text style={styles.uploadHelperText}>
-                 Add image URLs (up to 5). (Minimum 3 required) 
-            </Text>
-            <View style={styles.imageInputContainer}>
-                <TextInput 
-                    style={styles.imageLinkInput} 
-                    placeholder="Paste Image URL here (e.g., imgur.com/xyz.jpg)"
-                    value={currentImageLink}
-                    onChangeText={setCurrentImageLink}
-                    editable={!isLoading && imageLinks.length < 5} 
-                />
-                <TouchableOpacity 
-                    style={[styles.addButton, SUBTLE_SHADOW]} 
-                    onPress={handleAddImage}
-                    disabled={isLoading || imageLinks.length >= 5}
-                >
-                    <Icon name="add" size={24} color={COLORS.textDark} />
-                </TouchableOpacity>
-            </View>
-            
-            <View style={styles.imagePreviewContainer}>
-                {imageLinks.map((url, index) => (
-                    <View key={index} style={[styles.imagePill, SUBTLE_SHADOW]}>
-                        <Text style={styles.imageText} numberOfLines={1}>
-                            Image {index + 1}
-                        </Text>
-                        <TouchableOpacity onPress={() => handleRemoveImage(url)}>
-                            <Icon name="close-circle" size={20} color={COLORS.errorRed} />
-                        </TouchableOpacity>
-                    </View>
-                ))}
-            </View>
-        </View>
-    );
-
 
     // -----------------------------------------------------------------
     // 🏠 RENDER STEP CONTENT (Conditional Rendering for Stepper)
@@ -533,136 +421,135 @@ const ListingFormScreen = ({ listingId, onClose }) => {
         switch (currentStep) {
             case 1:
                 return (
-                    <>
-                        <Text style={styles.sectionTitle}>1. Listing Goal & Property Type</Text>
-                        {renderGoalSelector()}
-                        {renderPropertyTypeSelector()}
-                    </>
+                    <Step1GoalType
+                        goal={goal}
+                        setGoal={handleGoalChange}
+                        propertyType={propertyType}
+                        setPropertyType={setPropertyType}
+                        isLoading={isLoading}
+                        styles={styles} // Pass styles down
+                    />
                 );
             case 2:
                 return (
-                    <>
-                        <Text style={styles.sectionTitle}>2. Location & Pricing</Text>
+                    <Step2LocationPricing
+                        goal={goal}
+                        city={city}
+                        setCity={setCity}
+                        area={area}
+                        setArea={setArea}
+                        rent={rent}
+                        setRent={setRent}
+                        deposit={deposit}
+                        setDeposit={setDeposit}
+                        bedrooms={bedrooms}
+                        setBedrooms={setBedrooms}
+                        bathrooms={bathrooms}
+                        setBathrooms={setBathrooms}
+                        isLoading={isLoading}
+                        styles={styles}
+                        // 🚩 NEW PROPS PASSED
+                        pincode={pincode}
+                        setPincode={setPincode}
+                        flatNumber={flatNumber}
+                        setFlatNumber={setFlatNumber}
+                        stateName={stateName}
+                        setStateName={setStateName}
+                        districtName={districtName}
+                        setDistrictName={setDistrictName}
                         
-                        <View style={styles.inputRow}>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.label}>City</Text>
-                                <TextInput style={styles.textInput} placeholder="e.g., Mumbai" value={city} onChangeText={setCity} editable={!isLoading} />
-                            </View>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.label}>Area/Locality</Text>
-                                <TextInput style={styles.textInput} placeholder="e.g., Bandra West" value={area} onChangeText={setArea} editable={!isLoading} />
-                            </View>
-                        </View>
-                        
-                        <View style={styles.inputRow}>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.label}>{goal === 'Sale' ? 'Sale Price (₹)' : 'Monthly Rent (₹)'}</Text>
-                                <TextInput style={styles.textInput} placeholder="e.g., 45000" value={rent} onChangeText={setRent} keyboardType="numeric" editable={!isLoading} />
-                            </View>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.label}>Security Deposit (₹)</Text>
-                                <TextInput style={styles.textInput} placeholder="e.g., 150000" value={deposit} onChangeText={setDeposit} keyboardType="numeric" editable={!isLoading} />
-                            </View>
-                        </View>
-                        {renderPropertyDetails()}
-                    </>
+                        // Pass Toast utility function
+                        showToast={showToast} 
+                    />
                 );
+            // 🚨 NEW STEP 3
             case 3:
                 return (
-                    <>
-                        <Text style={styles.sectionTitle}>3. Furnishing & Key Amenities</Text>
-                        {renderFurnishingSelector()}
-                        
-                        <View style={styles.inputRow}>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.label}>Availability Date</Text>
-                                <View style={styles.selectorContainerSmall}>
-                                    {availableDates.map(date => (
-                                        <TouchableOpacity 
-                                            key={date} 
-                                            style={[styles.selectorButtonTiny, availableDate === date && styles.selectorButtonActive, SUBTLE_SHADOW]} 
-                                            onPress={() => setAvailableDate(date)}
-                                            disabled={isLoading}
-                                        >
-                                            <Text style={availableDate === date ? styles.selectorTextActive : styles.selectorText}>{date}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.label}>Current Occupants</Text>
-                                <TextInput style={styles.textInput} placeholder="e.g., 2 (for flatmate search)" value={currentOccupants} onChangeText={setCurrentOccupants} keyboardType="numeric" editable={!isLoading} />
-                            </View>
-                        </View>
-                        {renderAmenities()}
-                    </>
+                    <Step3PropertyDetails
+                        buildingAge={buildingAge}
+                        setBuildingAge={setBuildingAge}
+                        ownershipType={ownershipType}
+                        setOwnershipType={setOwnershipType}
+                        maintenanceCharges={maintenanceCharges}
+                        setMaintenanceCharges={setMaintenanceCharges}
+                        facing={facing}
+                        setFacing={setFacing}
+                        parking={parking}
+                        setParking={setParking}
+                        gatedSecurity={gatedSecurity}
+                        setGatedSecurity={setGatedSecurity}
+                        flooringType={flooringType}
+                        handleFlooringToggle={handleFlooringToggle}
+                        nearbyLocation={nearbyLocation}
+                        setNearbyLocation={setNearbyLocation}
+                        isLoading={isLoading}
+                        styles={styles}
+                    />
                 );
+            // 🚨 RENUMBERED STEP 4 (was 3)
             case 4:
                 return (
-                    <>
-                        <Text style={styles.sectionTitle}>4. Description & Tenant Requirements</Text>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Property Description</Text>
-                            <TextInput style={[styles.textInput, styles.textArea]} placeholder="Provide a detailed description of the property..." value={description} onChangeText={setDescription} multiline numberOfLines={4} editable={!isLoading} />
-                        </View>
-                        
-                        <View style={styles.inputRow}>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                <Text style={styles.labelSmall}>Brokerage Free?</Text>
-                                <TouchableOpacity
-                                    style={[styles.toggleButtonFull, isBrokerageFree && styles.toggleButtonActive, CTA_SHADOW]} 
-                                    onPress={() => setIsBrokerageFree(prev => !prev)}
-                                    disabled={isLoading}
-                                >
-                                    <Icon name={isBrokerageFree ? 'shield-checkmark' : 'close-circle-outline'} size={20} color={isBrokerageFree ? COLORS.cardBackground : COLORS.textDark} style={{ marginRight: 8 }} />
-                                    <Text style={isBrokerageFree ? styles.toggleTextActive : styles.toggleText}>
-                                        {isBrokerageFree ? 'Yes, Brokerage Free' : 'No, Brokerage Applies'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                            <View style={[styles.inputGroup, styles.inputHalf]}>
-                                {renderNegotiationMargin()}
-                            </View>
-                        </View>
-                        
-                        {/* Requirements (Conditional for Flatmate) */}
-                        {goal === 'Flatmate' && (
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Preferred Flatmate Requirements</Text>
-                                <View style={styles.inputRow}>
-                                    <View style={[styles.inputGroup, styles.inputHalf]}>
-                                        <Text style={styles.labelSmall}>Gender</Text>
-                                        <View style={styles.selectorContainerSmall}>
-                                            {preferredGenders.map(gender => (
-                                                <TouchableOpacity key={gender} style={[styles.selectorButtonTiny, preferredGender === gender && styles.selectorButtonActive, SUBTLE_SHADOW]} onPress={() => setPreferredGender(gender)} disabled={isLoading}>
-                                                    <Text style={preferredGender === gender ? styles.selectorTextActive : styles.selectorText}>{gender}</Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    </View>
-                                    <View style={[styles.inputGroup, styles.inputHalf]}>
-                                        <Text style={styles.labelSmall}>Occupation</Text>
-                                        {renderOccupationSelector()}
-                                    </View>
-                                </View>
-                                <Text style={styles.labelSmall}>Preferred Work Location</Text>
-                                <TextInput style={styles.textInput} placeholder="e.g., Andheri, Powai" value={preferredWorkLocation} onChangeText={setPreferredWorkLocation} editable={!isLoading} />
-                            </View>
-                        )}
-                    </>
+                    <Step4FurnishingAmenities
+                        furnishingType={furnishingType}
+                        setFurnishingType={setFurnishingType}
+                        availableDate={availableDate}
+                        setAvailableDate={setAvailableDate}
+                        currentOccupants={currentOccupants}
+                        setCurrentOccupants={setCurrentOccupants}
+                        selectedAmenities={selectedAmenities}
+                        handleAmenityToggle={handleAmenityToggle}
+                        isLoading={isLoading}
+                        styles={styles}
+                    />
                 );
+            // 🚨 RENUMBERED STEP 5 (was 4)
             case 5:
                 return (
-                    <>
-                        <Text style={styles.sectionTitle}>5. Property Images (Final Step)</Text>
-                        {renderImages()}
-                        {imageLinks.length < 3 && (
-                            <Text style={styles.errorText}>
-                                🚨 Minimum 3 images are required for submission. Currently: {imageLinks.length}
-                            </Text>
-                        )}
-                    </>
+                    <Step5DescriptionRequirements
+                        goal={goal}
+                        description={description}
+                        setDescription={setDescription}
+                        isBrokerageFree={isBrokerageFree}
+                        setIsBrokerageFree={setIsBrokerageFree}
+                        negotiationMargin={negotiationMargin}
+                        setNegotiationMargin={setNegotiationMargin}
+                        preferredGender={preferredGender}
+                        setPreferredGender={setPreferredGender}
+                        preferredOccupation={preferredOccupation}
+                        setPreferredOccupation={setPreferredOccupation}
+                        preferredWorkLocation={preferredWorkLocation}
+                        setPreferredWorkLocation={setPreferredWorkLocation}
+                        isLoading={isLoading}
+                        styles={styles}
+                    />
+                );
+            // 🚨 RENUMBERED STEP 6 (was 5)
+            case 6:
+                return (
+                    <Step6Images
+                        currentImageLink={currentImageLink}
+                        setCurrentImageLink={setCurrentImageLink}
+                        imageLinks={imageLinks}
+                        handleAddImage={handleAddImage}
+                        handleRemoveImage={handleRemoveImage}
+                        isLoading={isLoading}
+                        styles={styles}
+                    />
+                );
+            // ✅ NEW STEP 7 (FINAL STEP)
+            case 7:
+                return (
+                    <Step7ProximityPOI
+                        transitPoints={transitPoints}
+                        setTransitPoints={setTransitPoints}
+                        essentialPoints={essentialPoints}
+                        setEssentialPoints={setEssentialPoints}
+                        utilityPoints={utilityPoints}
+                        setUtilityPoints={setUtilityPoints}
+                        isLoading={isLoading}
+                        showToast={showToast}
+                        styles={styles}
+                    />
                 );
             default:
                 return <Text style={styles.errorText}>Invalid Step</Text>;
@@ -676,11 +563,12 @@ const ListingFormScreen = ({ listingId, onClose }) => {
                 <Text style={styles.mainHeader}>{isEditing ? 'Edit Existing Listing' : 'Create New Listing'}</Text>
                 <Text style={styles.subHeader}>Follow the steps to publish your property.</Text>
                 
-                {/* Stepper Progress Bar (NEW) */}
+                {/* Stepper Progress Bar */}
                 <Stepper 
                     currentStep={currentStep} 
                     steps={STEPS} 
                     onStepPress={handleGoToStep} 
+                    styles={styles}
                 />
                 
                 {/* Form Content (Current Step Card) - Key added for smoother transition */}
@@ -705,6 +593,7 @@ const ListingFormScreen = ({ listingId, onClose }) => {
                     {/* Next/Submit Button (Animated CTA Pop) */}
                     {isLastStep ? (
                         <TouchableOpacity 
+                            // 🚩 UPDATED: Disabled if currentStep is 7 and imageLinks are < 3 (Final validation check)
                             style={[styles.submitButton, CTA_SHADOW, isLoading && styles.disabledButton, currentStep === 1 && styles.buttonFullWidth]} 
                             onPress={handleSubmit}
                             disabled={isLoading || imageLinks.length < 3}
@@ -757,7 +646,7 @@ const BASE_ACTION_BUTTON_WEB_STYLES = Platform.select({
 // =================================================================
 // 🎨 STYLES (FIXED and UPDATED for new colors and animations)
 // =================================================================
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({ // Exported styles for use in Step components
     safeArea: { flex: 1, backgroundColor: COLORS.backgroundSoft },
     scrollContent: { 
         flexGrow: 1, 
@@ -861,11 +750,12 @@ const styles = StyleSheet.create({
     },
     
     // --- Input & Label Styles (Animated Focus) ---
-    inputGroup: { marginBottom: 20 },
+    inputGroup: { marginBottom: 20,position: 'relative' },
     label: { fontSize: 16, fontWeight: '600', color: COLORS.textDark, marginBottom: 8 },
     labelSmall: { fontSize: 14, fontWeight: '600', color: COLORS.textDark, marginBottom: 8 },
     inputRow: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' },
     inputHalf: { width: '48%', marginBottom: 0 },
+    inputFull: { width: '100%', marginBottom: 0 }, // 🚩 NEW: For State Dropdown to take full width
     textInput: {
         padding: 18, fontSize: 16, color: COLORS.textDark, backgroundColor: COLORS.backgroundSoft,
         borderRadius: 15, borderWidth: 1, borderColor: COLORS.textLight + '30', outlineStyle: 'none',
@@ -912,7 +802,7 @@ const styles = StyleSheet.create({
         })
     },
     selectorText: { color: COLORS.textDark, fontWeight: '600', fontSize: 14 },
-    selectorTextActive: { color: COLORS.textDark, fontWeight: '800', fontSize: 14 },
+    selectorTextActive: { color: COLORS.cardBackground, fontWeight: '800', fontSize: 14 },
     helperText: { fontSize: 14, color: COLORS.textLight, marginTop: 5, fontStyle: 'italic', paddingHorizontal: 5 },
     
     // --- Toggle Button Styles (Animated Hover) ---
@@ -1034,7 +924,60 @@ const styles = StyleSheet.create({
     },
     toastSuccess: { backgroundColor: COLORS.secondaryTeal, }, 
     toastError: { backgroundColor: COLORS.errorRed, },
-    toastText: { color: COLORS.textDark, fontWeight: 'bold' },
+    toastText: { color: COLORS.cardBackground, fontWeight: 'bold' },
+    
+    // 🚩 NEW STYLES FOR STEP 2 COMPONENT
+    areaInputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    locateButton: { backgroundColor: COLORS.secondaryTeal, padding: 12, borderRadius: 15, alignItems: 'center', justifyContent: 'center', height: 55, width: 55, ...BASE_ACTION_BUTTON_WEB_STYLES },
+    mapButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primaryCTA, padding: 10, borderRadius: 15, height: 55, paddingHorizontal: 15, ...BASE_ACTION_BUTTON_WEB_STYLES },
+    mapButtonText: { color: COLORS.cardBackground, fontWeight: '700', marginLeft: 5 },
+    cityDropdownListContainer: { 
+        maxHeight: 200, 
+        borderWidth: 1, 
+        borderColor: COLORS.primaryLight, 
+        borderRadius: 15, 
+        position: 'absolute', 
+        top: 90, // Adjusted for label + input height
+        width: '100%', 
+        backgroundColor: COLORS.cardBackground,
+        zIndex: 10000, 
+        elevation: 10,
+        ...SUBTLE_SHADOW,
+    },
+    cityDropdownItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: COLORS.backgroundSoft },
+    cityDropdownItemText: { color: COLORS.textDark, fontSize: 16 },
+    
+    // Map Modal Styles
+    mapModalCenteredView: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },
+    mapModalView: {
+        width: '90%', maxWidth: 600, margin: 20, backgroundColor: COLORS.cardBackground,
+        borderRadius: GENEROUS_RADIUS, padding: 35, alignItems: 'center', ...DEEP_SOFT_SHADOW
+    },
+    mapModalTitle: { fontSize: 20, fontWeight: '800', color: COLORS.headerBlue, marginBottom: 15 },
+    embeddedMapContainer: { 
+        width: '100%', aspectRatio: 1.5, backgroundColor: COLORS.backgroundSoft, borderRadius: 15, 
+        borderWidth: 2, borderColor: COLORS.secondaryTeal + '50', justifyContent: 'center', alignItems: 'center',
+        padding: 20 
+    },
+    embeddedMapText: { color: COLORS.textLight, fontSize: 16, textAlign: 'center' },
+    
+    // ✅ NEW STYLES FOR STEP 7 COMPONENT (Proximity/POI)
+    proximityInputGroup: { marginBottom: 15, borderLeftWidth: 3, borderLeftColor: COLORS.secondaryTeal + '50', paddingLeft: 10 },
+    proximityInputRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, justifyContent: 'space-between' },
+    proximityInputNameGlobalUnit: { flex: 4, marginRight: 10, padding: 10, height: 45, borderRadius: 10 },
+    proximityInputDistanceValueGlobal: { flex: 2, marginRight: 10, padding: 10, height: 45, borderRadius: 10 },
+    proximityUnitStaticContainer: { 
+        flex: 1.5, marginRight: 10, padding: 10, height: 45, borderRadius: 10, 
+        backgroundColor: COLORS.backgroundSoft, justifyContent: 'center', alignItems: 'center',
+        borderWidth: 1, borderColor: COLORS.textLight + '30',
+    },
+    proximityUnitStaticText: { fontSize: 14, color: COLORS.textDark, fontWeight: '600' },
+    addButtonSmall: { 
+        backgroundColor: COLORS.secondaryTeal, 
+        padding: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', height: 45, width: 45,
+        ...BASE_ACTION_BUTTON_WEB_STYLES 
+    },
+    divider: { height: 1, backgroundColor: COLORS.textLight + '20', marginVertical: 20, width: '100%' }, 
 });
 
 export default ListingFormScreen;
