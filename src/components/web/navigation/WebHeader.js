@@ -7,9 +7,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../theme/theme';
 import { useAuth } from '../../../context/AuthContext';
 
-// 🚨 REMOVED: import HomeScreen from '../HomeScreen.web.jsx'; 
-// HomeScreen will now be passed via props in screensMap
-
 // --- CONSTANTS & RESPONSIVENESS ---
 const { width } = Dimensions.get('window');
 const BREAKPOINT = 768;
@@ -26,10 +23,11 @@ const GLASS_STYLE = Platform.select({
 
 // =================================================================
 // 🚀 WebAppHeader (The actual Header Component)
-// 🚨 MODIFIED: अब activeScreenName prop स्वीकार करता है
+// 🚨 MODIFIED: अब activeScreenName और allowedScreenNames prop स्वीकार करता है
 // 🔥 FIX: Add 'export' keyword for named export
 // =================================================================
-export const WebAppHeader = ({ activeScreenName }) => {
+// 🛑 KEY CHANGE 1: Prop signature में allowedScreenNames को जोड़ें
+export const WebAppHeader = ({ activeScreenName, allowedScreenNames }) => {
   const navigation = useNavigation();
   const { colors, toggleTheme } = useTheme();
   const { logout } = useAuth();
@@ -43,13 +41,19 @@ export const WebAppHeader = ({ activeScreenName }) => {
   // 🚨 FIX: activeScreenName prop का उपयोग करें
   const currentRouteName = activeScreenName; 
 
-  // Navigation Links
-  const screens = [
+  // Navigation Links - Master List
+  const masterScreens = [
     { name: "Main", label: "Home", icon: "home-outline" },
     { name: "MessagingList", label: "Messages", icon: "chatbubble-ellipses-outline" },
     { name: "CreateListing", label: "Create Listing", icon: "add-circle-outline" },
     { name: "MyListings", label: "My Listings", icon: "list-outline" },
   ];
+  
+  // 🛑 KEY CHANGE 2: Master List को allowedScreenNames के आधार पर फ़िल्टर करें
+  // यह सुनिश्चित करता है कि केवल अनुमत लिंक्स ही Header में दिखाई दें।
+  const screens = masterScreens.filter(screen => 
+    !allowedScreenNames || allowedScreenNames.includes(screen.name)
+  );
 
   // Dynamic Styles
   const hS = getHeaderStyles(colors, isWebOrTablet);
@@ -130,6 +134,7 @@ export const WebAppHeader = ({ activeScreenName }) => {
         {/* 🔥 Middle Navigation (Hidden on Mobile) */}
         {Platform.OS === "web" && isWebOrTablet && (
           <View style={hS.navButtons}>
+            {/* 🛑 फ़िल्टर की गई 'screens' सूची का उपयोग करें */}
             {screens.map((screen, index) => {
               // 🚨 FIX: currentRouteName (activeScreenName) का उपयोग करें
               const isActive = screen.name === currentRouteName;
@@ -205,6 +210,7 @@ export const WebAppHeader = ({ activeScreenName }) => {
       {/* =================================================== */}
       {!isWebOrTablet && isMenuOpen && (
         <View style={[hS.mobileMenuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {/* 🛑 फ़िल्टर की गई 'screens' सूची का उपयोग करें */}
           {screens.map((screen, index) => {
             const isActive = screen.name === currentRouteName;
 
@@ -270,6 +276,9 @@ const WebHeader = ({ navigation, route, screensMap }) => {
   // 2. Get the Component from the map
   const ContentComponent = screensMap?.[currentInternalScreenName];
   
+  // 🛑 KEY CHANGE 3: screensMap से अनुमत स्क्रीन नामों की सूची प्राप्त करें
+  const allowedScreenNames = Object.keys(screensMap || {});
+  
   // 3. Dynamic content rendering function
   const renderContent = () => {
       if (!ContentComponent) {
@@ -292,7 +301,11 @@ const WebHeader = ({ navigation, route, screensMap }) => {
     <View style={[mS.wrapper, { backgroundColor: colors.background }]}>
       <View style={mS.headerWrapper}>
         {/* 🚨 FIX: Pass the active screen name down to WebAppHeader for correct highlighting */}
-        <WebAppHeader activeScreenName={currentInternalScreenName} />
+        {/* 🛑 KEY CHANGE 4: allowedScreenNames को WebAppHeader को पास करें */}
+        <WebAppHeader 
+            activeScreenName={currentInternalScreenName} 
+            allowedScreenNames={allowedScreenNames} // Pass the filtered list
+        />
       </View>
 
       <ScrollView contentContainerStyle={mS.scrollContainer}>

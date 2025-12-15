@@ -24,7 +24,31 @@ import { handleDeleteListing } from './ListingActions';
 import { API_BASE_URL } from '@env'; 
 // -------------------------------------
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const BREAKPOINT_MOBILE = 500;
+const BREAKPOINT_TABLET = 850; // Main breakpoint for 2-column vs 3-column split
+
+// =================================================================
+// 🚨 CUSTOM HOOK: Dynamic Width Tracking (Browser Resize/Orientation Change)
+// =================================================================
+const useResponsiveWidth = () => {
+    // 1. Initial width set
+    const [width, setWidth] = useState(Dimensions.get('window').width);
+
+    useEffect(() => {
+        // Function to update state on change
+        const updateWidth = () => setWidth(Dimensions.get('window').width);
+        
+        // 2. Add listener for screen dimension changes (browser resize/rotation)
+        Dimensions.addEventListener('change', updateWidth);
+        
+        // 3. Cleanup function to remove listener when component unmounts
+        return () => Dimensions.removeEventListener('change', updateWidth);
+    }, []);
+
+    return width;
+};
+// =================================================================
+
 
 // -----------------------------------------------------------------
 // 🎨 DISNEY-ESQUE COLORS & STYLES (Consistency is key)
@@ -48,17 +72,26 @@ const MY_LISTINGS_ENDPOINT = `${API_BASE_URL}/flatmate/listing/my-listings`;
 // 🎯 MAIN COMPONENT: MyListingsScreen
 // =================================================================
 const MyListingsScreen = () => {
+    // Call the hook to track dynamic width
+    const dynamicWidth = useResponsiveWidth(); 
+    
+    // --- State Management ---
     const [listings, setListings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [selectedListingId, setSelectedListingId] = useState(null); 
+    
+    // ✅ PAGINATION STATE
+    const [currentPage, setCurrentPage] = useState(1);
+    // ✅ FIXED: Changed 9 to 4 to ensure pagination shows up with few listings (e.g., 5 listings -> 2 pages)
+    const [listingsPerPage] = useState(3); 
 
-  
     // --- Data Fetching ---
     const fetchMyListings = async () => {
         setIsLoading(true);
         setError(null);
+        setCurrentPage(1); // Reset to page 1 on fresh fetch
         
         try {
             const response = await fetch(MY_LISTINGS_ENDPOINT, {
@@ -103,16 +136,11 @@ const MyListingsScreen = () => {
     
     // --- Handlers (State Dependent) ---
     
-    /** * एडिटिंग मॉडल को खोलता है।
-     * यह फ़ंक्शन यहाँ रहना चाहिए क्योंकि यह 'selectedListingId' और 'isEditModalVisible' स्टेट पर निर्भर करता है।
-     */
     const handleEditListing = (listingId) => {
         setSelectedListingId(listingId);
         setIsEditModalVisible(true); 
     };
 
-    /** * मॉडल बंद करता है और लिस्टिंग को रीफ़्रेश करता है।
-     */
     const handleModalClose = () => {
         setIsEditModalVisible(false);
         // ID को तुरंत साफ़ करें, लेकिन 300ms के बाद फ़्रेश करें ताकि UI ट्रांज़िशन समय मिल सके।
@@ -120,15 +148,113 @@ const MyListingsScreen = () => {
         fetchMyListings(); 
     };
 
-    /** * डिलीट होने पर लिस्टिंग स्टेट को अपडेट करता है (ListingActions.js से success callback)
-     */
     const handleDeletionSuccess = (deletedId) => {
         setListings(prev => prev.filter(l => l.listingId !== deletedId));
     };
 
+    // =========================================================
+    // ✅ Responsive Grid Logic (MODIFIED for 1-Column Mobile View up to 850px)
+    // =========================================================
+    let listingWidthStyle = {};
+    // 🛑 NEW VARIABLE: Grid justifyContent (Center or Space-Between)
+    let gridJustifyContent = 'space-between'; 
+
+    if (dynamicWidth < BREAKPOINT_TABLET) {
+        // मोबाइल/टैबलेट व्यू: 1 कार्ड प्रति पंक्ति (100% चौड़ाई)
+        listingWidthStyle = { 
+            width: '100%', 
+            marginBottom: 25,
+            marginRight: 0, 
+        }; 
+        // 🛑 KEY CHANGE: 100% चौड़ाई पर, ग्रिड को केंद्र में रखें
+        gridJustifyContent = 'center'; 
+    } else {
+        // वेब/डेस्कटॉप व्यू: 3 कार्ड प्रति पंक्ति (32% चौड़ाई, space-between के साथ काम करता है)
+        listingWidthStyle = { 
+            width: '32%', 
+            marginBottom: 30 
+        };
+        gridJustifyContent = 'space-between'; // Desktop requires space-between
+    }
+    // =========================================================
+
+    // =========================================================
+    // ✅ Pagination Logic and Controls
+    // =========================================================
+    const indexOfLastListing = currentPage * listingsPerPage;
+    const indexOfFirstListing = indexOfLastListing - listingsPerPage;
+    
+    // Get the listings for the current page
+    const currentListings = listings.slice(indexOfFirstListing, indexOfLastListing);
+    
+    const totalPages = Math.ceil(listings.length / listingsPerPage);
+    
+    const paginate = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
+        // Scroll to the top of the content when changing pages
+        if (scrollViewRef.current && scrollViewRef.current.scrollTo) {
+             scrollViewRef.current.scrollTo({ y: 0, animated: true });
+        }
+    };
+    
+    const scrollViewRef = React.useRef(null);
+
+    // Pagination Controls Component
+    const PaginationControls = () => {
+        // Condition is now easier to meet with listingsPerPage = 4
+        if (totalPages <= 1) return null; 
+
+        const pageNumbers = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(i);
+        }
+
+        return (
+            <View style={styles.paginationContainer}>
+                {/* Previous Button */}
+                <TouchableOpacity
+                    onPress={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                >
+                    <Icon name="chevron-back" size={20} color={currentPage === 1 ? '#AAA' : PRIMARY_COLOR} />
+                </TouchableOpacity>
+
+                {/* Page Numbers */}
+                {pageNumbers.map(number => (
+                    <TouchableOpacity
+                        key={number}
+                        onPress={() => paginate(number)}
+                        style={[
+                            styles.pageButton, 
+                            currentPage === number && styles.pageButtonActive
+                        ]}
+                    >
+                        <Text style={[
+                            styles.pageText, 
+                            currentPage === number && styles.pageTextActive
+                        ]}>
+                            {number}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+                
+                {/* Next Button */}
+                <TouchableOpacity
+                    onPress={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={[styles.pageButton, currentPage === totalPages && styles.pageButtonDisabled]}
+                >
+                    <Icon name="chevron-forward" size={20} color={currentPage === totalPages ? '#AAA' : PRIMARY_COLOR} />
+                </TouchableOpacity>
+            </View>
+        );
+    };
+    // =========================================================
+
 
     const renderLoadingOrError = () => {
-        // ... (Loading/Error/Empty State रेंडर लॉजिक)
         if (isLoading) {
             return (
                 <View style={styles.centerContainer}>
@@ -168,25 +294,40 @@ const MyListingsScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Attach ref for scrolling on page change */}
+            <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.mainContainer}>
-                    <Text style={[styles.header, { color: PRIMARY_COLOR }]}>Your Posted Properties ({listings.length})</Text>
+                    <Text style={[styles.header, { 
+                        color: PRIMARY_COLOR, 
+                        // Smaller header on mobile
+                        fontSize: dynamicWidth < BREAKPOINT_MOBILE ? 30 : 38
+                    }]}>
+                        My Properties ({listings.length})
+                    </Text>
 
                     {renderLoadingOrError()}
 
-                    <View style={styles.listingsGrid}>
-                        {listings.map(listing => (
-                            <ListingCard 
-                                key={listing.listingId} 
-                                listing={listing} 
-                               
-                                // State-dependent handler
-                                onEdit={handleEditListing} 
-                                // API-dependent handler (uses imported function)
-                                onDelete={(id) => handleDeleteListing(id, API_BASE_URL, handleDeletionSuccess)} 
-                            />
-                        ))}
-                    </View>
+                    {/* Render grid and pagination only if we have data to show */}
+                    {listings.length > 0 && (
+                        <>
+                            <View style={[styles.listingsGrid, { justifyContent: gridJustifyContent }]}>
+                                {/* Use currentListings for pagination */}
+                                {currentListings.map(listing => (
+                                    <ListingCard 
+                                        key={listing.listingId} 
+                                        listing={listing} 
+                                        style={listingWidthStyle} // Dynamic Width Applied Here
+                                        // State-dependent handler
+                                        onEdit={handleEditListing} 
+                                        // API-dependent handler (uses imported function)
+                                        onDelete={(id) => handleDeleteListing(id, API_BASE_URL, handleDeletionSuccess)} 
+                                    />
+                                ))}
+                            </View>
+                            
+                            <PaginationControls />
+                        </>
+                    )}
                 </View>
             </ScrollView>
             
@@ -253,6 +394,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#EEE',
         marginBottom: 30,
+        width: '100%', // Use full width of main container
     },
     statusText: {
         marginTop: 15,
@@ -300,12 +442,55 @@ const styles = StyleSheet.create({
     listingsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent:'space-evenly',
+        // 🛑 REMOVED: justifyContent:'space-between', // इसे अब डायनेमिक रूप से सेट किया जाएगा
         alignItems: 'stretch', 
         paddingBottom: 25,
-        maxWidth:'90%'
+        maxWidth:'100%' 
     },
     
+    // ===================================
+    // ✅ PAGINATION STYLES
+    // ===================================
+    paginationContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 30,
+        marginBottom: 20,
+        width: '100%',
+    },
+    pageButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        marginHorizontal: 5,
+        borderRadius: 8,
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#EEE',
+        // Web Hover effect
+        ':hover': {
+            backgroundColor: '#F0F0F0',
+            cursor: 'pointer',
+        },
+    },
+    pageButtonActive: {
+        backgroundColor: PRIMARY_COLOR,
+        borderColor: PRIMARY_COLOR,
+    },
+    pageButtonDisabled: {
+        opacity: 0.5,
+        cursor: 'default',
+    },
+    pageText: {
+        color: PRIMARY_COLOR,
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    pageTextActive: {
+        color: '#FFF',
+    },
+    // ===================================
+
     // Modal Styles
     modalContent: {
         flex: 1, 

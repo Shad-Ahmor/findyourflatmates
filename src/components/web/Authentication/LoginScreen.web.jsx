@@ -287,7 +287,7 @@ const LoginScreen = ({ navigation }) => {
       if (res.ok) {
         await login(data.user);
         // DIRECT NAVIGATION
-        navigation.replace("Home"); 
+        navigation.replace("Main"); 
       } else {
         // अगर टोकन वेरिफिकेशन सर्वर पर विफल हो जाता है, तो यह यहाँ विफल हो जाएगा
         Alert.alert('Login Failed', data.message || 'Invalid credentials or login failed.');
@@ -329,7 +329,7 @@ const LoginScreen = ({ navigation }) => {
                   ]}>
                       {/* Using the card color for contrast on the primary background */}
                       <Icon name="home-outline" size={90} color={colors.card} /> 
-                      <Text style={dynamicStyles.logoText}>FlatMates Hub</Text> 
+                      <Text style={dynamicStyles.logoText}>FYF</Text> 
                       <Text style={dynamicStyles.tagline}>
                           India's Safest Platform to Find Verified Flatmates and Rent-Free Spaces.
                       </Text>

@@ -4,13 +4,19 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     SafeAreaView, ScrollView, View, Text, Dimensions, TouchableOpacity, StyleSheet, Platform, Image
 } from 'react-native';
-import { useTheme } from '../../theme/theme.js';
+import { useTheme } from '../../../theme/theme.js';
 import Icon from 'react-native-vector-icons/Ionicons';
+// 🌟 NEW IMPORT: LandingScreenFooter
+import LandingScreenFooter from './LandingScreenFooter.web.jsx'; 
+// 🛑 NEW IMPORT: HeroSection Component (मान लें कि यह ../components/web में है)
+import HeroSection from './HeroSection.web.jsx'; 
+// 🛑 NEW IMPORT: HeroHeader Component (Now holds the entire sticky header bar)
+import HeroHeader from './ HeroHeader.web.jsx'; // <--- UPDATED IMPORT
 
 // NOTE: Ensure this image path is correct, or use a placeholder URL
-import heroImage from '../../../assets/hero_slide1.png';;
+import heroImage from '../../../../assets/hero_slide1.png';;
 // 🌟 NEW LOGO IMPORT
-import appLogo  from '../../../assets/findyourflatmates.png';
+import appLogo  from '../../../../assets/findyourflatmates.png';
 
 const { width, height } = Dimensions.get('window'); // Keeping this for static styles that reference width (e.g. hero, header)
 const BREAKPOINT = 768;
@@ -18,7 +24,8 @@ const MAX_WEB_WIDTH = '98vw'; // Fixed maximum width for better centering contro
 const HORIZONTAL_MARGIN = 15; // Margin to keep it off the edge
 
 // -----------------------------------------------------------------
-// 🎨 ENHANCED MAGICAL 3D STYLES & CONSTANTS (Matching PropertyListing.web.jsx Aesthetic)
+// 🎨 ENHANCED MAGICAL 3D STYLES & CONSTANTS 
+// NOTE: Global constants को यहीं रखा जाता है क्योंकि उनका उपयोग पूरे कंपोनेंट में होता है।
 // -----------------------------------------------------------------
 const BASE_SHADOW_COLOR = '#102A43'; // Deep Blue for better contrast
 const VIBRANT_ACCENT = '#FFC700'; // Gold/Yellow accent
@@ -63,7 +70,7 @@ const FLOATING_HEADER_STYLE = {
 
 // -----------------------------------------------------------------
 
-// --- ALL DATA ARRAYS RESTORED ---
+// --- ALL DATA ARRAYS RESTORED (Used in sections 2-10) ---
 const propertyTypes = ['Flat', 'PG', 'Hostel', 'House'];
 const featureCards = [
     { title: "Post Property", icon: "home", color: PRIMARY_COLOR },
@@ -107,13 +114,35 @@ const communityVibes = [
     { icon: "leaf-outline", title: "Eco-Friendly Homes", subtitle: "Listings focused on sustainable living." },
     { icon: "game-controller-outline", title: "Gaming Zones", subtitle: "Find flatmates who share your passion for gaming." },
 ];
+const whyChooseUsData = [
+    { 
+        icon: "cash-outline", 
+        title: "Zero Commission Model", 
+        subtitle: "Unlike high-cost competitors, we charge no brokerage fee. Save money and move freely!" 
+    },
+    { 
+        icon: "heart-circle-outline", 
+        title: "Community-First Focus", 
+        subtitle: "We prioritize finding the *right* flatmate match based on vibe, not just the property." 
+    },
+    { 
+        icon: "ribbon-outline", 
+        title: "Rewarded Engagement (Points)", 
+        subtitle: "Earn exclusive points for activity, which unlocks premium features and direct connections." 
+    },
+    { 
+        icon: "people-outline", 
+        title: "Direct Owner/Flatmate Chat", 
+        subtitle: "Connect directly with owners and flatmates without intrusive intermediaries or agents." 
+    },
+];
 // -----------------------------------------------------------------
 
 
 const LandingScreen = ({ navigation }) => {
     const { colors } = useTheme();
 
-    // 🌟 DYNAMIC WIDTH IMPLEMENTATION (as requested by user)
+    // 🌟 DYNAMIC WIDTH IMPLEMENTATION
     const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
     const dynamicWidth = windowDimensions.width;
     const dynamicHeight = windowDimensions.height;
@@ -126,32 +155,25 @@ const LandingScreen = ({ navigation }) => {
 
         const subscription = Dimensions.addEventListener('change', updateDimensions);
 
-        // Clean up the listener when the component is unmounted
         return () => subscription?.remove();
     }, []);
 
     // ----------------------------------------------------
     // 🪄 DYNAMIC CARD WIDTH LOGIC FUNCTION
     // ----------------------------------------------------
-    // Calculates width based on desired cards per row.
     const getCardWidth = useCallback((webCards) => {
-        const mobileCards = 2; // Always show 2 cards on mobile
+        const mobileCards = 2;
 
         if (dynamicWidth > BREAKPOINT) {
-            // Web: 4 cards -> 23%, 3 cards -> 31%
-            // Subtract 2% for margin/spacing
             return `${(100 / webCards) - 2}%`; 
         } else {
-            // Mobile: Always 2 cards -> 46%
-            // Subtract 4% for margin/spacing (46% ensures 4% space between two cards + margins)
             return `${(100 / mobileCards) - 4}%`;
         }
     }, [dynamicWidth]);
 
     // ----------------------------------------------------
-    // 🪄 DYNAMIC SIZE HELPER FUNCTION (NEW)
+    // 🪄 DYNAMIC SIZE HELPER FUNCTION
     // ----------------------------------------------------
-    // Returns a size value based on screen size.
     const getDynamicSize = useCallback((webSize, mobileSize) => {
         return isMobile ? mobileSize : webSize;
     }, [isMobile]);
@@ -162,14 +184,11 @@ const LandingScreen = ({ navigation }) => {
     const sectionRefs = useRef({});
     const [inView, setInView] = useState({});
 
-    // 🌟 TYPING ANIMATION STATE
-    const [typedQuote, setTypedQuote] = useState('');
-    const firstQuote = initialTestimonials[0].quote;
-
     // --- REFS FOR ALL SECTIONS RESTORED ---
     const categoryRef = useRef(null);
     const featureRef = useRef(null);
     const howItWorksRef = useRef(null);
+    const whyChooseUsRef = useRef(null); 
     const valueRef = useRef(null);
     const testimonialRef = useRef(null);
     const neighborhoodsRef = useRef(null);
@@ -177,8 +196,12 @@ const LandingScreen = ({ navigation }) => {
     const previewRef = useRef(null);
     const ctaRef = useRef(null);
 
+    // 🌟 TYPING ANIMATION STATE
+    const [typedQuote, setTypedQuote] = useState('');
+    const firstQuote = initialTestimonials[0].quote;
+
     // ----------------------------------------------------
-    // 🪄 CHAT TYPING EFFECT (Logic Retained)
+    // 🪄 CHAT TYPING EFFECT 
     // ----------------------------------------------------
     useEffect(() => {
         let index = 0;
@@ -205,12 +228,11 @@ const LandingScreen = ({ navigation }) => {
 
 
     // ----------------------------------------------------
-    // 🪄 CUSTOM SCROLL & PARALLAX LOGIC (Logic Retained)
+    // 🪄 CUSTOM SCROLL & PARALLAX LOGIC 
     // ----------------------------------------------------
 
     const measureSection = useCallback((sectionName, viewRef) => {
         if (viewRef && viewRef.current) {
-            // NOTE: Using dynamicHeight here
             viewRef.current.measure((x, y, width, height, pageX, pageY) => {
                 sectionRefs.current[sectionName] = {
                     y: pageY,
@@ -224,7 +246,7 @@ const LandingScreen = ({ navigation }) => {
     const handleScroll = useCallback((event) => {
         const currentScrollY = event.nativeEvent.contentOffset.y;
         setScrollY(currentScrollY);
-        const viewportHeight = dynamicHeight; // Using dynamicHeight
+        const viewportHeight = dynamicHeight; 
 
         const newInView = { ...inView };
         let updated = false;
@@ -253,7 +275,7 @@ const LandingScreen = ({ navigation }) => {
     };
 
     // ----------------------------------------------------
-    // 🎨 RENDER HELPER FOR ANIMATED CARDS (Logic Retained)
+    // 🪄 RENDER HELPER FOR ANIMATED CARDS
     // ----------------------------------------------------
     const getAnimatedCardStyle = (sectionName, index) => {
         const isTriggered = inView[sectionName];
@@ -279,6 +301,7 @@ const LandingScreen = ({ navigation }) => {
             measureSection('category', categoryRef);
             measureSection('feature', featureRef);
             measureSection('howItWorks', howItWorksRef);
+            measureSection('whyChooseUs', whyChooseUsRef); 
             measureSection('value', valueRef);
             measureSection('testimonial', testimonialRef);
             measureSection('neighborhoods', neighborhoodsRef);
@@ -300,87 +323,21 @@ const LandingScreen = ({ navigation }) => {
     // ⬇️ RENDERED COMPONENTS ⬇️
     // ----------------------------------------------------
 
-const Footer = () => (
-        <View style={[styles.footerContainer, { backgroundColor: colors.card + 'e0', borderTopColor: colors.border }]}>
-
-            {/* 1. Branding and Social (MOVED OUTSIDE footerContent) */}
-     
-            <View style={styles.footerContent}>
-
-                {/* 2. Quick Links (Now first column) */}
-                <View style={styles.footerSection}>
-                    <Text style={[styles.footerHeading, { color: colors.text }]}>Quick Links</Text>
-                    {['Browse Listings', 'Post Property', 'Find Flatmate', 'Neighborhoods'].map((item, index) => (
-                        <Text key={index} style={[styles.footerLink, { color: colors.text + 'a0' }]}>{item}</Text>
-                    ))}
-                </View>
-
-                {/* 3. Company */}
-                <View style={styles.footerSection}>
-                    <Text style={[styles.footerHeading, { color: colors.text }]}>Company</Text>
-                    {['About Us', 'Careers', 'Blog', 'Contact Support'].map((item, index) => (
-                        <Text key={index} style={[styles.footerLink, { color: colors.text + 'a0' }]}>{item}</Text>
-                    ))}
-                </View>
-
-                {/* 4. Legal */}
-                <View style={styles.footerSection}>
-                    <Text style={[styles.footerHeading, { color: colors.text }]}>Legal</Text>
-                    {['Terms of Service', 'Privacy Policy', 'Sitemap', 'FAQ'].map((item, index) => (
-                        <Text key={index} style={[styles.footerLink, { color: colors.text + 'a0' }]}>{item}</Text>
-                    ))}
-                </View>
-            </View>
-
-            <View style={[styles.footerDivider, { backgroundColor: colors.border }]} />
-       <View style={[styles.footerBrandingHeader, { maxWidth: MAX_WEB_WIDTH }]}>
-             
-                 <Text style={[styles.footerCopyright, { color: colors.text + '60' }]}>
-                © {new Date().getFullYear()} GDLSofts. All rights reserved. Built with magic.
-            </Text>
-                <View style={styles.socialIcons}>
-                    <Icon name="logo-facebook" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
-                    <Icon name="logo-instagram" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
-                    <Icon name="logo-linkedin" size={24} color={VIBRANT_ACCENT} style={styles.socialIcon} />
-                </View>
-                  
-            </View>
-            
-         
-        </View>
-    );
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
 
-            {/* 👑 ENHANCED STICKY HEADER BAR (CENTERED FIX) */}
-            <View
-                style={[
-                    styles.headerBar,
-                    {
-                        backgroundColor: colors.card,
-                        ...DEEP_3D_SHADOW, // Deep Shadow for floating effect
-                        ...FLOATING_HEADER_STYLE,
-                    }
-                ]}
-            >
-                {/* 🌟 LOGO IMAGE REPLACEMENT FOR HEADER */}
-                   <View style={styles.headerLogoContainer}> 
-                    <Image
-                        source={appLogo}
-                        style={styles.headerLogo}
-                        resizeMode="contain"
-                    />
-                    {/* DYNAMIC FONT SIZE */}
-                    <Text style={[styles.headerTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(28, 20) }]}>FlatMates</Text>
-                </View>
-                <TouchableOpacity
-                    style={[styles.loginButton, { backgroundColor: PRIMARY_COLOR, ...SUBTLE_SHADOW }]}
-                    onPress={handleLogin}
-                >
-                    {/* DYNAMIC ICON SIZE */}
-                    <Icon name="log-in-outline" size={getDynamicSize(24, 20)} color={VIBRANT_ACCENT} />
-                </TouchableOpacity>
-            </View>
+            {/* 👑 ENHANCED STICKY HEADER BAR (CENTERED FIX) - USING NEW COMPONENT */}
+            <HeroHeader 
+                appLogo={appLogo} 
+                PRIMARY_COLOR={PRIMARY_COLOR} 
+                VIBRANT_ACCENT={VIBRANT_ACCENT}
+                DEEP_3D_SHADOW={DEEP_3D_SHADOW}
+                SUBTLE_SHADOW={SUBTLE_SHADOW}
+                FLOATING_HEADER_STYLE={FLOATING_HEADER_STYLE}
+                getDynamicSize={getDynamicSize} 
+                handleLogin={handleLogin}
+                colors={colors} // Pass colors for background
+            />
 
             <ScrollView
                 onScroll={handleScroll}
@@ -388,43 +345,22 @@ const Footer = () => (
                 // NOTE: Using static width here as it's outside the scrolling content area
                 contentContainerStyle={[styles.scrollContentWeb, { maxWidth: MAX_WEB_WIDTH + HORIZONTAL_MARGIN * 2, backgroundColor: colors.background }]} 
             >
-                {/* 🏰 SECTION 1: HERO (3D LAYERED WITH PARALLAX) */}
-                <View 
-                    style={[
-                        styles.heroContainer, 
-                        { 
-                            backgroundColor: PRIMARY_COLOR + '15', 
-                            ...DEEP_3D_SHADOW,
-                            height: getDynamicSize('65vh', '50vh')
-                        }
-                    ]}
-                >
-                    <Image
-                        source={heroImage}
-                        style={[styles.heroImage, heroImageParallax]}
-                        resizeMode="cover"
-                    />
-
-                    {/* 🌟 3D Layered Content */}
-                    <View style={[styles.heroContent, { transform: [{ translateZ: 50 }] }]}>
-                        {/* DYNAMIC FONT SIZE */}
-                        <Text style={[styles.heroTextTitle, { color: VIBRANT_ACCENT, fontSize: getDynamicSize(68, 15) }]}>
-                            Find Your <Text style={{ color: PRIMARY_COLOR }}>Magical</Text> Flatmates
-                        </Text>
-                        {/* DYNAMIC FONT SIZE */}
-                        <Text style={[styles.heroTextSubtitle, { color: colors.card, fontSize: getDynamicSize(24, 10) }]}>
-                            Verified homes and magic matches await you on your grand adventure.
-                        </Text>
-                        <TouchableOpacity
-                            style={[styles.heroCTA, { backgroundColor: PRIMARY_COLOR, ...SUBTLE_SHADOW }]}
-                            onPress={() => navigation.navigate('Signup')}
-                        >
-                            {/* DYNAMIC FONT SIZE */}
-                            <Text style={[styles.heroCTAText, { color: VIBRANT_ACCENT, fontSize: getDynamicSize(22, 10) }]}>Join the Kingdom</Text>
-                        </TouchableOpacity>
-
-                    </View>
-                </View>
+                {/* 🏰 SECTION 1: HERO - CALLING THE NEW COMPONENT */}
+                {/* 🛑 MODIFIED: HeroSection कंपोनेंट को सभी आवश्यक props पास किए गए */}
+                <HeroSection 
+                    colors={colors}
+                    isMobile={isMobile}
+                    getDynamicSize={getDynamicSize}
+                    handleLogin={handleLogin}
+                    heroImageParallax={heroImageParallax}
+                    heroImage={heroImage}
+                    PRIMARY_COLOR={PRIMARY_COLOR}
+                    VIBRANT_ACCENT={VIBRANT_ACCENT}
+                    DEEP_3D_SHADOW={DEEP_3D_SHADOW}
+                    GENEROUS_RADIUS={GENEROUS_RADIUS}
+                    MAX_WEB_WIDTH={MAX_WEB_WIDTH}
+                    BUTTON_RADIUS={BUTTON_RADIUS}
+                />
 
 
                 {/* --- SECTION 2: EXPLORE CATEGORIES --- */}
@@ -582,7 +518,51 @@ const Footer = () => (
                     </View>
                 </View>
 
-                {/* --- SECTION 5: VALUE PROPOSITIONS --- */}
+                {/* 🏆 SECTION 5: WHY CHOOSE US - THE FLATMATES DIFFERENCE */}
+                <View
+                    style={[styles.sectionContainer, { marginTop: 100, backgroundColor: VIBRANT_ACCENT + '05', paddingVertical: 60, borderRadius: GENEROUS_RADIUS * 2 }]}
+                    ref={whyChooseUsRef}
+                    onLayout={() => measureSection('whyChooseUs', whyChooseUsRef)}
+                >
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionTitle, { color: PRIMARY_COLOR, fontSize: getDynamicSize(42, 18) }]}>🏆 Why Choose Us? The FlatMates Difference</Text>
+                    {/* DYNAMIC FONT SIZE */}
+                    <Text style={[styles.sectionSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(20, 10) }]}>Skip the high brokerage fees and the agent-heavy marketplaces. This is your home, your way.</Text>
+
+                    <View style={styles.whyChooseUsGrid}>
+                        {whyChooseUsData.map((data, index) => (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.whyChooseUsCard,
+                                    {
+                                        width: getCardWidth(4),
+                                        backgroundColor: colors.card,
+                                        borderBottomColor: VIBRANT_ACCENT,
+                                        ...SUBTLE_SHADOW,
+                                        ...getAnimatedCardStyle('whyChooseUs', index),
+                                        ...styles.hoverScaleEffect,
+                                    }
+                                ]}
+                            >
+                                {/* DYNAMIC ICON SIZE & PADDING */}
+                                <View style={[styles.iconWrapper, { 
+                                    backgroundColor: PRIMARY_COLOR + '10',
+                                    padding: getDynamicSize(18, 10),
+                                }]}>
+                                    <Icon name={data.icon} size={getDynamicSize(35, 15)} color={PRIMARY_COLOR} />
+                                </View>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.whyChooseUsTitle, { color: colors.text, fontSize: getDynamicSize(20, 12) }]}>{data.title}</Text>
+                                {/* DYNAMIC FONT SIZE */}
+                                <Text style={[styles.whyChooseUsSubtitle, { color: colors.text + '80', fontSize: getDynamicSize(16, 10) }]}>{data.subtitle}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+                {/* 🏆 END NEW SECTION */}
+
+                {/* --- SECTION 6: VALUE PROPOSITIONS (Original Section 5) --- */}
                 <View
                     style={[styles.sectionContainer, { marginTop: 100 }]}
                     ref={valueRef}
@@ -625,7 +605,7 @@ const Footer = () => (
                     </View>
                 </View>
 
-                {/* 🏡 SECTION 6: COMMUNITY VIBE */}
+                {/* 🏡 SECTION 7: COMMUNITY VIBE (Original Section 6) */}
                 <View
                     style={[styles.sectionContainer, { marginTop: 100, backgroundColor: PRIMARY_COLOR + '05', paddingVertical: 60, borderRadius: GENEROUS_RADIUS * 2 }]}
                     ref={communityRef}
@@ -668,7 +648,7 @@ const Footer = () => (
                 </View>
 
 
-                {/* 💬 SECTION 7: USER TESTIMONIALS (ENHANCED CHAT BUBBLES + TYPING ANIMATION) */}
+                {/* 💬 SECTION 8: USER TESTIMONIALS (Original Section 7) */}
                 <View
                     style={[styles.sectionContainer, { marginTop: 100, backgroundColor: colors.background }]}
                     ref={testimonialRef}
@@ -756,7 +736,7 @@ const Footer = () => (
                     </View>
                 </View>
 
-                {/* 🏘️ SECTION 8: FEATURED NEIGHBORHOODS */}
+                {/* 🏘️ SECTION 9: FEATURED NEIGHBORHOODS (Original Section 8) */}
                 <View
                     style={[styles.sectionContainer, { marginTop: 100, backgroundColor: colors.background }]}
                     ref={neighborhoodsRef}
@@ -807,7 +787,7 @@ const Footer = () => (
                 </View>
 
 
-                {/* 🚀 SECTION 9: FUTURE PREVIEWS */}
+                {/* 🚀 SECTION 10: FUTURE PREVIEWS (Original Section 9) */}
                 <View
                     style={[styles.sectionContainer, { marginTop: 100, marginBottom: 40, backgroundColor: colors.background }]}
                     ref={previewRef}
@@ -851,8 +831,15 @@ const Footer = () => (
                 </View>
 
 
-                {/* 🦶 BEAUTIFUL FOOTER SECTION */}
-                <Footer />
+                {/* 🦶 BEAUTIFUL FOOTER SECTION (USING NEW COMPONENT) */}
+                <LandingScreenFooter 
+                    colors={colors} 
+                    dynamicWidth={dynamicWidth} 
+                    MAX_WEB_WIDTH={MAX_WEB_WIDTH} 
+                    VIBRANT_ACCENT={VIBRANT_ACCENT} 
+                    PRIMARY_COLOR={PRIMARY_COLOR} 
+                    navigation={navigation}
+                />
 
 
             </ScrollView>
@@ -861,7 +848,7 @@ const Footer = () => (
 };
 
 
-// --- WEB-SPECIFIC STYLES (Keep static layout and base styles here) ---
+// --- WEB-SPECIFIC STYLES (Header-specific styles हटा दिए गए हैं) ---
 const styles = StyleSheet.create({
     scrollContentWeb: {
         flexGrow: 0,
@@ -901,103 +888,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 40,
     },
-
-    // 👑 HEADER BAR STYLE (CENTERED FIX)
-    headerBar: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: width > BREAKPOINT ? 20 : 15,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: GENEROUS_RADIUS,
-        marginHorizontal: '1%',
-        marginTop: 15,
-        marginBottom: 15,
-        zIndex: 10,
-        alignSelf: 'center',
-        width: MAX_WEB_WIDTH,
-    },
-
-headerLogoContainer: { 
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    headerLogo: { 
-        height: 40,
-        width: 40, 
-        marginRight: 10,
-    },
     
-    // 👑 ENHANCED HEADER TITLE STYLE
-    headerTitle: {
-        fontWeight: '900', 
-        letterSpacing: 0.5, 
-    },
-    loginButton: {
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
-        justifyContent: 'center',
-        alignItems: 'center',
-        transition: 'all 0.3s ease',
-        ':hover': {
-            transform: [{ scale: 1.2 }, { rotate: '5deg' }],
-            boxShadow: `0 0 15px ${VIBRANT_ACCENT}`,
-        },
-    },
-
-    // 🏰 --- HERO SECTION STYLES (Parallax) ---
-    heroContainer: {
-        position: 'relative',
-        marginTop: width > BREAKPOINT ? 10 + 5 : 5 + 5,
-        overflow: 'hidden',
-        borderRadius: GENEROUS_RADIUS * 2,
-        zIndex: 5,
-        alignSelf: 'center',
-        maxWidth: MAX_WEB_WIDTH,
-        width: '100%',
-    },
-    heroImage: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        opacity: 0.2, 
-    },
-    heroContent: {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 40,
-        backgroundColor: 'rgba(0,0,0,0.7)', 
-    },
-    heroTextTitle: {
-        fontWeight: '900',
-        textAlign: 'center',
-        marginBottom: 15,
-        textShadow: '3px 3px 10px rgba(0,0,0,1)', 
-        letterSpacing: 1.5, 
-    },
-    heroTextSubtitle: {
-        fontWeight: '500',
-        textAlign: 'center',
-        marginBottom: 40, 
-        textShadow: '1px 1px 4px rgba(0,0,0,1)',
-    },
-    heroCTA: {
-        paddingVertical: 10,
-        paddingHorizontal: 30,
-        borderRadius: 30,
-        transition: 'all 0.3s ease',
-        ':hover': {
-            transform: [{ scale: 1.05 }],
-        },
-    },
-    heroCTAText: {
-        fontWeight: '900',
-    },
-
     // 🌟 REUSABLE ICON WRAPPER STYLE (Padding dynamic in JSX)
     iconWrapper: {
         borderRadius: 15, 
@@ -1082,6 +973,31 @@ headerLogoContainer: {
     stepSubtitle: {
         textAlign: 'left',
     },
+
+    // 🏆 NEW SECTION STYLES: WHY CHOOSE US
+    whyChooseUsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingVertical: 20,
+    },
+    whyChooseUsCard: {
+        padding: 25,
+        borderRadius: BUTTON_RADIUS,
+        marginBottom: 20,
+        borderBottomWidth: 4,
+        alignItems: 'flex-start',
+    },
+    whyChooseUsTitle: {
+        fontWeight: '900', 
+        marginBottom: 5,
+        marginTop: 15,
+    },
+    whyChooseUsSubtitle: {
+        textAlign: 'left',
+    },
+    // 🏆 END NEW SECTION STYLES
+
 
     valuePropsGrid: {
         flexDirection: 'row',
@@ -1261,85 +1177,6 @@ headerLogoContainer: {
         marginTop: 15,
     },
     previewSubtitle: {
-        textAlign: 'center',
-    },
-
-
-  // 🦶 BEAUTIFUL FOOTER STYLES
-    footerContainer: {
-
-        borderTopWidth: 1,
-        marginTop: 60, // More space before footer
-        textAlign:'center',
-        justifyContent:'center'
-    },
-    
-    // NEW STYLE FOR THE BRANDING SECTION HEADER
-    footerBrandingHeader: {
-        flexDirection:'row',
-        width: '100%',
-        alignSelf: 'center',
-        display:'flex',
-        justifyContent:'space-between',
-        marginBottom: width > BREAKPOINT ? 20 : 15, // Add separation margin
-    },
-
-    footerContent: {
-        flexDirection: width > BREAKPOINT ? 'row' : 'column',
-        justifyContent: 'center',
-        maxWidth: MAX_WEB_WIDTH,
-        alignSelf: 'center',
-        width: width > BREAKPOINT ? '20%' : '100%', // These sections keep their width logic
-        marginBottom: 40,
-        marginTop:20,
-    },
-    footerSection: {
-        width: width > BREAKPOINT ? '20%' : '100%', // These sections keep their width logic
-        marginBottom: width > BREAKPOINT ? 0 : 30,
-    },
-
-    // 👑 FOOTER LOGO STYLES
-    
-
-    footerHeading: {
-        fontSize: 20,
-        fontWeight: '900', // Very bold
-        marginBottom: 15,
-        borderBottomWidth: 3, // Thicker underline
-        borderBottomColor: VIBRANT_ACCENT, // Accent underline
-        paddingBottom: 5,
-        width: 'fit-content',
-    },
-    footerLink: {
-        fontSize: 16,
-        marginBottom: 8,
-        transition: 'color 0.2s',
-        ':hover': {
-            color: PRIMARY_COLOR,
-            textDecorationLine: 'underline',
-            cursor: 'pointer',
-        },
-    },
-    socialIcons: {
-        flexDirection: 'row',
-        marginTop: 10,
-    },
-    socialIcon: {
-        marginRight: 15,
-        transition: 'transform 0.2s',
-        ':hover': {
-            transform: [{ scale: 1.2 }],
-        },
-    },
-    footerDivider: {
-        height: 1,
-        maxWidth: MAX_WEB_WIDTH,
-        alignSelf: 'center',
-        width: '100%',
-        marginBottom: 20,
-    },
-    footerCopyright: {
-        fontSize: 14,
         textAlign: 'center',
     },
 });

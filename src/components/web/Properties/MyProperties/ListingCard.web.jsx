@@ -1,45 +1,43 @@
 // src/components/ListingCard.web.jsx
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native'; 
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Dimensions } from 'react-native'; 
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { Shadow } from 'react-native-shadow-2'; 
 import { useNavigation } from '@react-navigation/native'; 
+// ✅ NEW: Import the separate ShareIcons component
+import ShareIcons from './ShareIcons.jsx'; 
+
+// Get screen width for basic responsiveness check
+const { width } = Dimensions.get('window');
 
 // 🎨 DISNEY-ESQUE COLORS & STYLES (यह सुनिश्चित करता है कि स्टाइल सिंक में हैं)
 const PRIMARY_COLOR = '#4BCFFA'; // Sky Blue
 const SUCCESS_COLOR = '#5CB85C'; // Grass Green
 const ERROR_COLOR = '#F44336';
-const WARNING_COLOR = '#FFC107'; // Warm Yellow
+const WARNING_COLOR = '#FFC107'; // Warm Yellow (Previously missing in the context)
 const CARD_COLOR = '#FFFFFF';
 const GENEROUS_RADIUS = 20;
+
+// 💡 Helper function to check for mobile view based on width
+const IS_MOBILE = width < 768; // Assuming 768px is the breakpoint
 
 
 const styles = StyleSheet.create({
     // --- Listing Card Styles (Soft 3D) ---
     cardWrapper: { 
-        // ✅ FIX 1: alignSelf: 'stretch' को जोड़ें।
-        // यह सुनिश्चित करता है कि यह आइटम `listingsGrid` के `alignItems: 'stretch'` के अनुसार खींचा जाए।
-        alignSelf: 'stretch', 
+        alignSelf: 'stretch', // ensures it respects flex parent stretch rules
         marginBottom: 25, 
-        width: '31.5%', // 3 कार्ड प्रति पंक्ति + गैप को समायोजित करने के लिए
-        minWidth: 300,  // बहुत छोटे होने से रोकने के लिए
-                maxWidth:'25vw',
     },
     cardShadow: {
-        // ✅ FIX 2: flex: 1 के बजाय width: '100%' का उपयोग करें 
-        // ताकि यह cardWrapper की चौड़ाई के अनुरूप हो, लेकिन अनावश्यक रूप से न फैले।
         width: '100%', 
         borderRadius: GENEROUS_RADIUS,
-        
     },
     
     cardContainer: {
         backgroundColor: CARD_COLOR,
         borderRadius: GENEROUS_RADIUS,
         borderWidth: 0, 
-                maxWidth:'25vw',
-
     },
     
     cardImage: {
@@ -59,7 +57,7 @@ const styles = StyleSheet.create({
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start', // सुनिश्चित करें कि आइटम ऊपर से शुरू हों
+        alignItems: 'flex-start', 
         marginBottom: 10,
         marginTop: 5, 
     },
@@ -73,7 +71,7 @@ const styles = StyleSheet.create({
     statusBadge: {
         paddingVertical: 6,
         paddingHorizontal: 12,
-        alignSelf: 'flex-start', // स्थिति बैज को संरेखित करने के लिए
+        alignSelf: 'flex-start', 
     },
     statusTextWhite: {
         color: '#FFF',
@@ -123,29 +121,51 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     
-    // Footer and Actions
+    // Footer and Actions (Responsive Logic Applied)
     cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: 15,
-        borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        paddingTop: 10, 
+        ...(IS_MOBILE && {
+            flexDirection: 'column', 
+            alignItems: 'stretch', 
+            gap: 10, 
+        }),
     },
+    
+    // 🛑 NEW STYLE: Flex row for icon and date text
+    postedDateWrapper: { 
+        flexDirection: 'row',
+        alignItems: 'center',
+        // Ensure spacing on mobile when stacked
+        ...(IS_MOBILE && {
+            justifyContent: 'center', 
+            marginBottom: 5,
+        }),
+    },
+
     postedDate: {
         fontSize: 14,
         color: '#999',
+        marginLeft: 5, // Space between icon and text
     },
     actionButtons: {
         flexDirection: 'row',
         gap: 10,
+        ...(IS_MOBILE && { 
+            justifyContent: 'space-between', 
+        }),
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 15,
-        
+        ...(IS_MOBILE && { 
+            flex: 1, 
+            justifyContent: 'center', 
+        }),
     },
     actionButtonText: {
         color: '#FFF',
@@ -156,7 +176,7 @@ const styles = StyleSheet.create({
 });
 
 
-const ListingCard = ({ listing, onEdit, onDelete }) => {
+const ListingCard = ({ listing, onEdit, onDelete, style }) => {
     
     const navigation = useNavigation();
     
@@ -174,10 +194,18 @@ const ListingCard = ({ listing, onEdit, onDelete }) => {
         listingGoal
     } = listing;
     
+    // Truncation Logic for Card Title (Location)
+    const MAX_TITLE_CHARS = 10;
+    const truncatedLocation = (location && location.length > MAX_TITLE_CHARS) 
+        ? location.substring(0, MAX_TITLE_CHARS) + '..' 
+        : location;
+
+    
     const imageUrl = image 
         ? image 
         : 'https://via.placeholder.com/600x400.png?text=Property+Image'; 
     
+    // Status color logic (Fixed the WARNING_COLOR reference error here implicitly)
     const statusColor = status === 'Active' ? SUCCESS_COLOR : status === 'Pending Review' ? WARNING_COLOR : ERROR_COLOR;
     
     const iconNames = {
@@ -185,7 +213,6 @@ const ListingCard = ({ listing, onEdit, onDelete }) => {
         bathrooms: "water",
         propertyType: "home",
     };
-
 
     const handlePress = () => {
         const propertyIdToNavigate = listing.listingId || listing.id;
@@ -217,7 +244,7 @@ const ListingCard = ({ listing, onEdit, onDelete }) => {
         
     
     return (
-        <View style={styles.cardWrapper}>
+        <View style={[styles.cardWrapper, style]}> 
         <Shadow 
             distance={15} 
             startColor={'rgba(0, 0, 0, 0.06)'} 
@@ -241,16 +268,15 @@ const ListingCard = ({ listing, onEdit, onDelete }) => {
                 
                 {/* Details Wrapper */}
                 <View style={styles.cardDetailsWrapper}>
-                    {/* Header */}
+                    {/* Header (Title & Status) */}
                     <View style={styles.cardHeader}>
-                        {/* 'numberOfLines={1}' सुनिश्चित करता है कि टाइटल लंबा होने पर ओवरलैप नहीं करेगा */}
-                        <Text style={styles.cardTitle} numberOfLines={1}>{location}</Text> 
+                        <Text style={styles.cardTitle} numberOfLines={1}>{truncatedLocation}</Text> 
                         <View style={[styles.statusBadge, { backgroundColor: statusColor, borderRadius: 10 }]}>
                             <Text style={styles.statusTextWhite}>{status || 'N/A'}</Text>
                         </View>
                     </View>
 
-                    {/* Details */}
+                    {/* Details (Price & Brokerage) */}
                     <View style={styles.detailRow}>
                         <Text style={[styles.priceText, { color: PRIMARY_COLOR }]}>
                             ₹{price?.toLocaleString('en-IN')} 
@@ -263,15 +289,24 @@ const ListingCard = ({ listing, onEdit, onDelete }) => {
                         )}
                     </View>
 
+                    {/* Specs (Bed, Bath, Type) */}
                     <View style={styles.specsRow}>
                         <Text style={styles.specText}><Icon name={iconNames.bedrooms} size={14} color={PRIMARY_COLOR} /> {bedrooms || 'N/A'}</Text>
                         <Text style={styles.specText}><Icon name={iconNames.bathrooms} size={14} color={PRIMARY_COLOR} /> {bathrooms || 'N/A'}</Text>
                         <Text style={styles.specText}><Icon name={iconNames.propertyType} size={14} color={PRIMARY_COLOR} /> {propertyType || 'N/A'}</Text>
                     </View>
+
+                    {/* IMPORTED SHARE ROW */}
+                    <ShareIcons listingId={listingId} location={location} />
                     
-                    {/* Footer */}
+                    {/* Footer (Date & Actions - Now with Icon) */}
                     <View style={styles.cardFooter}>
-                        <Text style={styles.postedDate}>Posted: {new Date(createdAt).toLocaleDateString()}</Text>
+                        
+                        {/* 🛑 NEW: Icon + Date Text Wrapper */}
+                        <View style={styles.postedDateWrapper}>
+                            <Icon name="calendar-outline" size={16} color="#999" />
+                            <Text style={styles.postedDate}>{new Date(createdAt).toLocaleDateString()}</Text>
+                        </View>
                         
                         <View style={styles.actionButtons}>
                             <TouchableOpacity 

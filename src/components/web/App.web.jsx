@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from '../../../src/theme/theme.js';
+// 🛑 KEY CHANGE 1: useAuth से user, isAuthenticated, और isLoading को प्राप्त करेंगे
 import { useAuth, AuthProvider } from '../../../src/context/AuthContext'; 
 
 // Screens (Web में उपयोग होने वाले)
@@ -23,7 +24,7 @@ import WebMainScreen, { WebAppHeader } from './navigation/WebHeader';
 const LoginScreenComponent = require('./Authentication/LoginScreen.web.jsx').default; 
 const SignupScreenComponent = require('./Authentication/SignupScreen.web.jsx').default;
 const BasicDetailForm = require('./Authentication/BasicDetailForm.web.jsx').default;
-const LandingScreenComponent = require('./LandingScreen.web.jsx').default; 
+const LandingScreenComponent = require('./LandingPage/LandingScreen.web.jsx').default; 
 const HomeScreen = require('./HomeScreen.web.jsx').default; 
 
 // Main App Screens (These will be rendered inside WebMainScreen)
@@ -35,17 +36,58 @@ const ChatScreen = require('./Communication/ChatScreen.web.jsx').default;
 
 
 // ======================================================
-// 📌 AUTHENTICATED SCREEN MAP (Internal Routing)
+// 📌 ALL AUTHENTICATED SCREEN MAP (Internal Routing)
 // ======================================================
-const AUTH_SCREENS_MAP = {
-  Main: HomeScreen, 
+// यह अब सभी संभावित इंटरनल स्क्रीन की मास्टर सूची है।
+const ALL_AUTH_SCREENS = {
+  Main: HomeScreen, // Home स्क्रीन (डिफ़ॉल्ट)
   MessagingList: MessagingScreen,
   CreateListing: ListingFormScreenComponent,
   MyListings: MyListingsScreenComponent,
+  // Note: PropertyDetail एक Stack.Screen है, यहाँ नहीं।
+};
+
+
+// ======================================================
+// 🛑 KEY RBAC CONFIG: ROLE ACCESS CONTROL MAP
+// ======================================================
+// परिभाषित करता है कि प्रत्येक भूमिका (Role) को किन इंटरनल स्क्रीन (स्क्रीन नाम) तक पहुंच है।
+const ROLE_ACCESS_MAP = {
+    // Admin : Complete Access (Internal Screens)
+    Admin: ['Main', 'MessagingList', 'CreateListing', 'MyListings'],
+    
+    // Tenanat/Buyer: Detailview, Main
+    Tenant: ['Main'], 
+    Buyer: ['Main'],
+    
+    // Seller/Owner: Detailview, MyListings, CreateListing
+    Seller: ['Main', 'MyListings', 'CreateListing'],
+    Owner: ['Main', 'MyListings', 'CreateListing'],
+    
+    // यदि कोई भूमिका अपरिभाषित है, तो केवल होम एक्सेस करें (Fallback)
+    DEFAULT: ['Main'],
+};
+
+
+// 💡 HELPER: भूमिका के आधार पर स्क्रीन मैप को फ़िल्टर करता है
+const getRoleBasedScreens = (role) => {
+    // भूमिका (Role) के आधार पर अनुमत स्क्रीन नामों की सूची प्राप्त करें
+    const allowedScreenNames = ROLE_ACCESS_MAP[role] || ROLE_ACCESS_MAP.DEFAULT;
+    const filteredScreens = {};
+
+    // अनुमत स्क्रीन नामों के आधार पर कॉम्पोनेंट्स को ALL_AUTH_SCREENS से फ़िल्टर करें
+    allowedScreenNames.forEach(screenName => {
+        if (ALL_AUTH_SCREENS[screenName]) {
+            filteredScreens[screenName] = ALL_AUTH_SCREENS[screenName];
+        }
+    });
+
+    return filteredScreens;
 };
 
 // ======================================================
 // 📌 Linking Configuration for Web URLs
+// ... (कोई बदलाव नहीं)
 // ======================================================
 const linking = {
   prefixes: ['http://localhost:8081', '/'], 
@@ -58,7 +100,6 @@ const linking = {
       BasicDetails: 'BasicDetails',
       Privacy: 'Privacy', 
       Terms: 'Terms',
-      // Main: 'Property/:screen?',
       Main: 'Property',
 
       FlatmateSetup: 'FlatmateSetup',
@@ -77,11 +118,12 @@ const linking = {
 const Stack = createNativeStackNavigator();
 
 // ------------------------------------------------------
-// 🚨 Web RootStack Function
+// 🚨 Web RootStack Function (RBAC लागू)
 // ------------------------------------------------------
 function RootStack() {
   const { colors } = useTheme();
-  const { isAuthenticated, isLoading } = useAuth(); 
+  // 🛑 KEY CHANGE 2: useAuth से user को डिस्ट्रक्चर करें
+  const { isAuthenticated, isLoading, user } = useAuth(); 
 
   if (isLoading) {
     return (
@@ -91,6 +133,14 @@ function RootStack() {
         </View>
     );
   }
+
+  // 🛑 KEY CHANGE 3: उपयोगकर्ता की भूमिका के आधार पर स्क्रीन मैप प्राप्त करें
+  const userRole = user?.role || 'DEFAULT';
+  const roleBasedScreensMap = getRoleBasedScreens(userRole);
+  
+  // WebAppHeader को केवल अनुमत स्क्रीन नेम्स की सूची भेजें
+  const allowedInternalScreenNames = Object.keys(roleBasedScreensMap); 
+
 
   return (
     <Stack.Navigator
@@ -104,16 +154,19 @@ function RootStack() {
           {/* Main screen uses WebMainScreen as its wrapper */}
           <Stack.Screen 
             name="Main" 
-            component={(props) => <WebMainScreen {...props} screensMap={AUTH_SCREENS_MAP} />}
+            // 🛑 KEY CHANGE 4: फ़िल्टर किए गए roleBasedScreensMap को पास करें
+            component={(props) => <WebMainScreen {...props} screensMap={roleBasedScreensMap} />}
             options={{ headerShown: false }}
           />
 
           {/* PropertyDetail Screen with Custom Header */}
+          {/* PropertyDetail सभी के लिए उपलब्ध है, लेकिन Header को फ़िल्टर किए गए मेनू की आवश्यकता है */}
           <Stack.Screen 
             name="PropertyDetail" 
             component={PropertyDetailScreen} 
             options={{ 
-              header: () => <WebAppHeader activeScreenName="Main" />,
+              // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
+              header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />,
               headerShown: true, 
               headerTitle: '',
             }}
@@ -124,7 +177,8 @@ function RootStack() {
             name="Privacy" 
             component={PrivacyPolicyScreen} 
             options={{ 
-                header: () => <WebAppHeader activeScreenName="Main" />, 
+                // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
+                header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />, 
                 headerShown: true, 
                 headerTitle: '',
             }}
@@ -133,7 +187,8 @@ function RootStack() {
             name="Terms" 
             component={TermsScreen} 
             options={{ 
-                header: () => <WebAppHeader activeScreenName="Main" />, 
+                // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
+                header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />, 
                 headerShown: true, 
                 headerTitle: '',
             }}
@@ -142,13 +197,15 @@ function RootStack() {
             name="FlatmateSetup"
             component={FlatmateProfileSetupScreen}
             options={{ 
-                header: () => <WebAppHeader activeScreenName="Main" />, 
+                // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
+                header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />, 
                 headerShown: true, 
                 headerTitle: '',
             }}
           />
 
-          {/* FlatmateChat and Logout */}
+          {/* FlatmateChat और Logout को रोल के आधार पर नियंत्रित करने की आवश्यकता नहीं है, 
+              लेकिन वे WebMainScreen द्वारा प्रबंधित नहीं हैं */}
           <Stack.Screen name="FlatmateChat" component={ChatScreen} options={{ headerShown: false }} /> 
 
           <Stack.Screen 
