@@ -122,7 +122,7 @@ export const WebAppHeader = ({ activeScreenName }) => {
 
             {/* 🔥 Logo */}
             <TouchableOpacity onPress={() => navigateAndCloseMenu("Main")}>
-                <Text style={[hS.logoText, { color: colors.primary }]}>FlatMates</Text>
+                <Text style={[hS.logoText, { color: colors.primary }]}>FYF</Text>
             </TouchableOpacity>
         </View>
 

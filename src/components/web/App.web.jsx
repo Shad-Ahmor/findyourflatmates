@@ -9,7 +9,7 @@ import { ThemeProvider, useTheme } from '../../../src/theme/theme.js';
 import { useAuth, AuthProvider } from '../../../src/context/AuthContext'; 
 
 // Screens (Web में उपयोग होने वाले)
-import ForgotPasswordScreen from '../../../src/screens/ForgotPasswordScreen.jsx';
+import ForgotPasswordScreen from './Authentication/ForgotPasswordScreen.jsx';
 import FlatmateProfileSetupScreen from '../../../src/screens/FlatmateProfileSetupScreen.jsx';
 import LogoutScreen from '../../../src/screens/LogoutScreen.jsx';  
 import PrivacyPolicyScreen from '../../../src/screens/PrivacyPolicyScreen.jsx'; 
@@ -20,18 +20,18 @@ import TermsScreen from '../../../src/screens/TermsScreen.jsx';
 import WebMainScreen, { WebAppHeader } from './navigation/WebHeader'; 
 
 // Web Screen Components (Require Logic)
-const LoginScreenComponent = require('./LoginScreen.web.jsx').default; 
-const SignupScreenComponent = require('./SignupScreen.web.jsx').default;
-const BasicDetailForm = require('./BasicDetailForm.web.jsx').default;
+const LoginScreenComponent = require('./Authentication/LoginScreen.web.jsx').default; 
+const SignupScreenComponent = require('./Authentication/SignupScreen.web.jsx').default;
+const BasicDetailForm = require('./Authentication/BasicDetailForm.web.jsx').default;
 const LandingScreenComponent = require('./LandingScreen.web.jsx').default; 
 const HomeScreen = require('./HomeScreen.web.jsx').default; 
 
 // Main App Screens (These will be rendered inside WebMainScreen)
-const ListingFormScreenComponent = require('./PropertyListing/ListingFormScreen.web.jsx').default; 
-const MyListingsScreenComponent = require('./MyListingsScreen.web.jsx').default;
-const PropertyDetailScreen = require('./PropertyDetail/PropertyDetailScreen.web.jsx').default; 
-const MessagingScreen = require('./MessagingScreen.web.jsx').default;
-const ChatScreen = require('./ChatScreen.web.jsx').default; 
+const ListingFormScreenComponent = require('./Properties/PublicProperties/PropertyListing/PropertyCreate.web.jsx').default; 
+const MyListingsScreenComponent = require('./Properties/MyProperties/MyListingsScreen.web.jsx').default;
+const PropertyDetailScreen = require('./Properties/PublicProperties/PropertyDetail/PropertyDetailScreen.web.jsx').default; 
+const MessagingScreen = require('./Communication/MessagingScreen.web.jsx').default;
+const ChatScreen = require('./Communication/ChatScreen.web.jsx').default; 
 
 
 // ======================================================
@@ -58,7 +58,9 @@ const linking = {
       BasicDetails: 'BasicDetails',
       Privacy: 'Privacy', 
       Terms: 'Terms',
-      Main: 'Property/:screen?',
+      // Main: 'Property/:screen?',
+      Main: 'Property',
+
       FlatmateSetup: 'FlatmateSetup',
       MessagingList: 'MessagingList',
       FlatmateChat: 'FlatmateChat',

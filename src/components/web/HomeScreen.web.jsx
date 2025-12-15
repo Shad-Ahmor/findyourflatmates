@@ -4,8 +4,7 @@ import {
  SafeAreaView, ScrollView, View, Text, Image, Dimensions, Alert, Modal, FlatList, TouchableOpacity, StyleSheet, Platform
 } from 'react-native'; 
 import { useTheme } from '../../theme/theme.js'; 
-import PropertyListing from './PropertyListing.web.jsx';
-import WebFilterBar from './WebFilterBar.jsx';
+import PropertyListing from './Properties/PublicProperties/PropertyListing/PropertyDisplay.web.jsx';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 
 const { width: windowWidth } = Dimensions.get('window'); // width को windowWidth से बदला गया
