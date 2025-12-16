@@ -264,6 +264,16 @@ if (isLoading) {
 // 📌 Web App Component
 // ======================================================
 export default function WebApp() {
+    if (Platform.OS === 'web') {
+    const { pathname, search, hash } = window.location;
+
+    // agar hash nahi hai → hash me convert karo
+    if (!hash) {
+      window.location.replace(`/#${pathname}${search}`);
+      return null; // prevent double render
+    }
+  }
+  
   return (
     <ThemeProvider>
       <SafeAreaProvider>
