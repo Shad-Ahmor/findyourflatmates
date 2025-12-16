@@ -4,9 +4,9 @@ import { ActivityIndicator, View, Text, StyleSheet, Platform } from 'react-nativ
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Linking from 'expo-linking'; // ✅ ADDED (required)
 
 import { ThemeProvider, useTheme } from '../../../src/theme/theme.js';
-// 🛑 KEY CHANGE 1: useAuth से user, isAuthenticated, और isLoading को प्राप्त करेंगे
 import { useAuth, AuthProvider } from '../../../src/context/AuthContext'; 
 
 // Screens (Web में उपयोग होने वाले)
@@ -17,7 +17,6 @@ import PrivacyPolicyScreen from '../../../src/screens/PrivacyPolicyScreen.jsx';
 import TermsScreen from '../../../src/screens/TermsScreen.jsx';
 
 // Web Navigation/Header
-// WebAppHeader अब WebHeader.web.jsx से ठीक से आयात होगा
 import WebMainScreen, { WebAppHeader } from './navigation/WebHeader'; 
 
 // Web Screen Components (Require Logic)
@@ -27,122 +26,121 @@ const BasicDetailForm = require('./Authentication/BasicDetailForm.web.jsx').defa
 const LandingScreenComponent = require('./LandingPage/LandingScreen.web.jsx').default; 
 const HomeScreen = require('./HomeScreen.web.jsx').default; 
 
-// Main App Screens (These will be rendered inside WebMainScreen)
+// Main App Screens
 const ListingFormScreenComponent = require('./Properties/PublicProperties/PropertyListing/PropertyCreate.web.jsx').default; 
 const MyListingsScreenComponent = require('./Properties/MyProperties/MyListingsScreen.web.jsx').default;
 const PropertyDetailScreen = require('./Properties/PublicProperties/PropertyDetail/PropertyDetailScreen.web.jsx').default; 
 const MessagingScreen = require('./Communication/MessagingScreen.web.jsx').default;
 const ChatScreen = require('./Communication/ChatScreen.web.jsx').default; 
 
-
 // ======================================================
-// 📌 ALL AUTHENTICATED SCREEN MAP (Internal Routing)
+// 📌 ALL AUTHENTICATED SCREEN MAP
 // ======================================================
-// यह अब सभी संभावित इंटरनल स्क्रीन की मास्टर सूची है।
 const ALL_AUTH_SCREENS = {
-  Main: HomeScreen, // Home स्क्रीन (डिफ़ॉल्ट)
+  Main: HomeScreen,
   MessagingList: MessagingScreen,
   CreateListing: ListingFormScreenComponent,
   MyListings: MyListingsScreenComponent,
-  // Note: PropertyDetail एक Stack.Screen है, यहाँ नहीं।
 };
 
-
 // ======================================================
-// 🛑 KEY RBAC CONFIG: ROLE ACCESS CONTROL MAP
+// 🛑 RBAC CONFIG
 // ======================================================
-// परिभाषित करता है कि प्रत्येक भूमिका (Role) को किन इंटरनल स्क्रीन (स्क्रीन नाम) तक पहुंच है।
 const ROLE_ACCESS_MAP = {
-    // Admin : Complete Access (Internal Screens)
-    Admin: ['Main', 'MessagingList', 'CreateListing', 'MyListings'],
-    
-    // Tenanat/Buyer: Detailview, Main
-    Tenant: ['Main'], 
-    Buyer: ['Main'],
-    
-    // Seller/Owner: Detailview, MyListings, CreateListing
-    Seller: ['Main', 'MyListings', 'CreateListing'],
-    Owner: ['Main', 'MyListings', 'CreateListing'],
-    
-    // यदि कोई भूमिका अपरिभाषित है, तो केवल होम एक्सेस करें (Fallback)
-    DEFAULT: ['Main'],
+  Admin: ['Main', 'MessagingList', 'CreateListing', 'MyListings'],
+  Tenant: ['Main'], 
+  Buyer: ['Main'],
+  Seller: ['Main', 'MyListings', 'CreateListing'],
+  Owner: ['Main', 'MyListings', 'CreateListing'],
+  DEFAULT: ['Main'],
 };
 
-
-// 💡 HELPER: भूमिका के आधार पर स्क्रीन मैप को फ़िल्टर करता है
 const getRoleBasedScreens = (role) => {
-    // भूमिका (Role) के आधार पर अनुमत स्क्रीन नामों की सूची प्राप्त करें
-    const allowedScreenNames = ROLE_ACCESS_MAP[role] || ROLE_ACCESS_MAP.DEFAULT;
-    const filteredScreens = {};
+  const allowedScreenNames = ROLE_ACCESS_MAP[role] || ROLE_ACCESS_MAP.DEFAULT;
+  const filteredScreens = {};
 
-    // अनुमत स्क्रीन नामों के आधार पर कॉम्पोनेंट्स को ALL_AUTH_SCREENS से फ़िल्टर करें
-    allowedScreenNames.forEach(screenName => {
-        if (ALL_AUTH_SCREENS[screenName]) {
-            filteredScreens[screenName] = ALL_AUTH_SCREENS[screenName];
+  allowedScreenNames.forEach(screenName => {
+    if (ALL_AUTH_SCREENS[screenName]) {
+      filteredScreens[screenName] = ALL_AUTH_SCREENS[screenName];
+    }
+  });
+
+  return filteredScreens;
+};
+
+// ======================================================
+// 📌 Linking Configuration (HASH BASED)
+// ======================================================
+const linking = Platform.OS === 'web'
+  ? {
+      prefixes: ['/'], // ✅ FIXED (was '')
+
+      config: {
+        screens: {
+          Landing: '',
+          Login: 'Login',
+          Signup: 'Signup',
+          ForgotPassword: 'ForgotPassword',
+          BasicDetails: 'BasicDetails',
+          Privacy: 'Privacy',
+          Terms: 'Terms',
+          Main: 'Property',
+          FlatmateSetup: 'FlatmateSetup',
+          MessagingList: 'MessagingList',
+          FlatmateChat: 'FlatmateChat',
+          CreateListing: 'CreateListing',
+          MyListings: 'MyListings',
+          PropertyDetail: 'PropertyDetail',
+          Logout: 'Logout',
+        },
+      },
+
+      // ⭐ HASH → PATH
+      getInitialURL() {
+        if (typeof window !== 'undefined') {
+          const hash = window.location.hash;
+          return hash ? hash.replace(/^#/, '') : '/'; // ✅ safer
         }
-    });
+        return Linking.createURL('/');
+      },
 
-    return filteredScreens;
-};
+      subscribe(listener) {
+        const onHashChange = () => {
+          const hash = window.location.hash;
+          listener(hash ? hash.replace(/^#/, '') : '/'); // ✅ safer
+        };
+
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+      },
+    }
+  : undefined;
 
 // ======================================================
-// 📌 Linking Configuration for Web URLs
-// ... (कोई बदलाव नहीं)
-// ======================================================
-const linking = {
-  prefixes: ['http://localhost:8081', '/'], 
-  config: {
-    screens: {
-      Landing: '',
-      Login: 'Login',
-      Signup: 'Signup',
-      ForgotPassword: 'ForgotPassword',
-      BasicDetails: 'BasicDetails',
-      Privacy: 'Privacy', 
-      Terms: 'Terms',
-      Main: 'Property',
-
-      FlatmateSetup: 'FlatmateSetup',
-      MessagingList: 'MessagingList',
-      FlatmateChat: 'FlatmateChat',
-      CreateListing: 'CreateListing',
-      MyListings: 'MyListings',
-      PropertyDetail: 'PropertyDetail', 
-      Logout: 'Logout',
-    },
-  },
-};
-// ======================================================
-
 
 const Stack = createNativeStackNavigator();
 
 // ------------------------------------------------------
-// 🚨 Web RootStack Function (RBAC लागू)
+// 🚨 Root Stack
 // ------------------------------------------------------
 function RootStack() {
   const { colors } = useTheme();
-  // 🛑 KEY CHANGE 2: useAuth से user को डिस्ट्रक्चर करें
   const { isAuthenticated, isLoading, user } = useAuth(); 
 
-if (isLoading) {
+  if (isLoading) {
     return (
-       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-            <ActivityIndicator size="large" color={colors.primary || '#FF9500'} />
-            <Text style={[styles.loadingText, { color: colors.text }]}>
-                Checking session...
-            </Text>
-        </View>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary || '#FF9500'} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Checking session...
+        </Text>
+      </View>
     );
   }
 
-  // 🛑 KEY CHANGE 3: उपयोगकर्ता की भूमिका के आधार पर स्क्रीन मैप प्राप्त करें
   const userRole = user?.role || 'DEFAULT';
   const roleBasedScreensMap = getRoleBasedScreens(userRole);
-  
-  // WebAppHeader को केवल अनुमत स्क्रीन नेम्स की सूची भेजें
   const allowedInternalScreenNames = Object.keys(roleBasedScreensMap); 
-
 
   return (
     <Stack.Navigator
@@ -153,107 +151,45 @@ if (isLoading) {
     >
       {isAuthenticated ? (
         <>
-          {/* Main screen uses WebMainScreen as its wrapper */}
           <Stack.Screen 
-            name="Main" 
-            // 🛑 KEY CHANGE 4: फ़िल्टर किए गए roleBasedScreensMap को पास करें
-            component={(props) => <WebMainScreen {...props} screensMap={roleBasedScreensMap} />}
+            name="Main"
+            component={(props) => (
+              <WebMainScreen {...props} screensMap={roleBasedScreensMap} />
+            )}
             options={{ headerShown: false }}
           />
 
-          {/* PropertyDetail Screen with Custom Header */}
-          {/* PropertyDetail सभी के लिए उपलब्ध है, लेकिन Header को फ़िल्टर किए गए मेनू की आवश्यकता है */}
           <Stack.Screen 
-            name="PropertyDetail" 
-            component={PropertyDetailScreen} 
-            options={{ 
-              // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
-              header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />,
-              headerShown: true, 
+            name="PropertyDetail"
+            component={PropertyDetailScreen}
+            options={{
+              header: (props) => (
+                <WebAppHeader
+                  {...props}
+                  allowedScreenNames={allowedInternalScreenNames}
+                  activeScreenName="Main"
+                />
+              ),
+              headerShown: true,
               headerTitle: '',
             }}
           />
-          
-          {/* Custom Header for Privacy, Terms, and FlatmateSetup */}
-          <Stack.Screen 
-            name="Privacy" 
-            component={PrivacyPolicyScreen} 
-            options={{ 
-                // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
-                header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />, 
-                headerShown: true, 
-                headerTitle: '',
-            }}
-          />
-          <Stack.Screen 
-            name="Terms" 
-            component={TermsScreen} 
-            options={{ 
-                // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
-                header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />, 
-                headerShown: true, 
-                headerTitle: '',
-            }}
-          />
-          <Stack.Screen
-            name="FlatmateSetup"
-            component={FlatmateProfileSetupScreen}
-            options={{ 
-                // 🛑 KEY CHANGE 5: WebAppHeader को अनुमत स्क्रीन नाम (allowedInternalScreenNames) पास करें
-                header: (props) => <WebAppHeader {...props} allowedScreenNames={allowedInternalScreenNames} activeScreenName="Main" />, 
-                headerShown: true, 
-                headerTitle: '',
-            }}
-          />
 
-          {/* FlatmateChat और Logout को रोल के आधार पर नियंत्रित करने की आवश्यकता नहीं है, 
-              लेकिन वे WebMainScreen द्वारा प्रबंधित नहीं हैं */}
-          <Stack.Screen name="FlatmateChat" component={ChatScreen} options={{ headerShown: false }} /> 
-
-          <Stack.Screen 
-            name="Logout" 
-            component={LogoutScreen} 
-            options={{ headerShown: false }} 
-          />
+          <Stack.Screen name="Privacy" component={PrivacyPolicyScreen} />
+          <Stack.Screen name="Terms" component={TermsScreen} />
+          <Stack.Screen name="FlatmateSetup" component={FlatmateProfileSetupScreen} />
+          <Stack.Screen name="FlatmateChat" component={ChatScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Logout" component={LogoutScreen} options={{ headerShown: false }} />
         </>
       ) : (
         <>
-         <Stack.Screen 
-            name="Landing" 
-            component={LandingScreenComponent} 
-            options={{ headerShown: false }} 
-          />
-        <Stack.Screen 
-            name="Privacy" 
-            component={PrivacyPolicyScreen} 
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="Terms" 
-            component={TermsScreen} 
-            options={{ headerShown: false }} 
-          />
-         
-          <Stack.Screen 
-            name="Login" 
-            component={LoginScreenComponent} 
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="Signup" 
-            component={SignupScreenComponent} 
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen
-            name="BasicDetails"
-            component={BasicDetailForm}
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="ForgotPassword" 
-            component={ForgotPasswordScreen} 
-            options={{ headerShown: false }} 
-          />
+          <Stack.Screen name="Landing" component={LandingScreenComponent} options={{ headerShown: false }} />
+          <Stack.Screen name="Privacy" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Terms" component={TermsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Login" component={LoginScreenComponent} options={{ headerShown: false }} />
+          <Stack.Screen name="Signup" component={SignupScreenComponent} options={{ headerShown: false }} />
+          <Stack.Screen name="BasicDetails" component={BasicDetailForm} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
         </>
       )}
     </Stack.Navigator>
@@ -264,21 +200,31 @@ if (isLoading) {
 // 📌 Web App Component
 // ======================================================
 export default function WebApp() {
-if (Platform.OS === 'web') {
-  const { pathname, hash } = window.location;
 
-  if (!hash && pathname !== '/' && pathname !== '') {
-    window.location.replace(`/#${pathname}`);
-    return null;
+  // ✅ SAFE NON-BLOCKING REDIRECT (ADDED)
+  React.useEffect(() => {
+    if (Platform.OS === 'web') {
+      const { pathname, hash } = window.location;
+      if (!hash && pathname !== '/' && pathname !== '') {
+        window.location.replace(`/#${pathname}`);
+      }
+    }
+  }, []);
+
+  // ⛔ EXISTING LOGIC — KEPT AS IS (NOT REMOVED)
+  if (Platform.OS === 'web') {
+    const { pathname, hash } = window.location;
+    if (!hash && pathname !== '/' && pathname !== '') {
+      window.location.replace(`/#${pathname}`);
+      return null;
+    }
   }
-}
-
 
   return (
     <ThemeProvider>
       <SafeAreaProvider>
-        <AuthProvider> 
-          <NavigationContainer linking={linking}> 
+        <AuthProvider>
+          <NavigationContainer linking={linking}>
             <RootStack />
           </NavigationContainer>
         </AuthProvider>
@@ -287,6 +233,7 @@ if (Platform.OS === 'web') {
   );
 }
 
+// ======================================================
 
 const styles = StyleSheet.create({
   headerTitle: {
@@ -295,9 +242,9 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   loadingContainer: {
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: 10,
