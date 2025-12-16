@@ -6,9 +6,7 @@
     "start": "APP_ENV=local PLATFORM=web expo start",
     "start:dev": "APP_ENV=development PLATFORM=web expo start",
     "start:prod": "APP_ENV=production PLATFORM=web expo start",
-
     "web": "PLATFORM=web expo start --web",
-
     "build:web": "APP_ENV=production PLATFORM=web expo export --platform web && node copyRedirects.js",
     "android": "expo run:android",
     "ios": "expo run:ios"
@@ -62,9 +60,8 @@
     "@react-native-community/cli": "latest",
     "autoprefixer": "^10.4.22",
     "babel-plugin-module-resolver": "^5.0.2",
-    "babel-preset-expo": "~9.0.1",
     "babel-plugin-transform-remove-console": "^6.9.4",
-    "babel-plugin-obfuscator": "^0.5.0",
+    "babel-preset-expo": "~9.0.1",
     "javascript-obfuscator": "^5.1.0",
     "jest-transform-stub": "^2.0.0",
     "metro-react-native-babel-preset": "0.70.3",
