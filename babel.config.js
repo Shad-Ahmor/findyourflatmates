@@ -4,7 +4,7 @@ module.exports = function (api) {
   api.cache(true);
 
   const isProd = process.env.NODE_ENV === 'production';
-
+  const isWeb = process.env.PLATFORM === 'web';
   return {
     presets: ['babel-preset-expo'],
     plugins: [
@@ -27,7 +27,7 @@ module.exports = function (api) {
       // =======================================================
       // 🛑 PRODUCTION ONLY HARDENING
       // =======================================================
-      ...(isProd
+      ...(isProd && !isWeb
         ? [
             // 🧹 Remove console logs (except errors)
             [
@@ -43,7 +43,6 @@ module.exports = function (api) {
                 simplify: true,
                 stringArrayThreshold: 0.75,
                 transformObjectKeys: true,
-                // debugProtection: true, // ❌ avoid in Expo
               },
             ],
           ]
