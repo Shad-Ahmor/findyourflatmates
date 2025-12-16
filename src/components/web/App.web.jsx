@@ -125,11 +125,13 @@ function RootStack() {
   // 🛑 KEY CHANGE 2: useAuth से user को डिस्ट्रक्चर करें
   const { isAuthenticated, isLoading, user } = useAuth(); 
 
-  if (isLoading) {
+if (isLoading) {
     return (
-        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
             <ActivityIndicator size="large" color={colors.primary || '#FF9500'} />
-            <Text style={[styles.loadingText, { color: colors.text }]}>Loading session...</Text>
+            <Text style={[styles.loadingText, { color: colors.text }]}>
+                Checking session...
+            </Text>
         </View>
     );
   }

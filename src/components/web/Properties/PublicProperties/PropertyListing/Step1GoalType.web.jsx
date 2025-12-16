@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { listingGoals, propertyTypeData, SUBTLE_SHADOW } from './PropertyCreate';
+// सुनिश्चित करें कि ये सभी इंपोर्ट सही पाथ से आ रहे हैं
+import { listingGoals, propertyTypeData, SUBTLE_SHADOW } from './PropertyCreate'; 
 
 const Step1GoalType = ({ goal, setGoal, propertyType, setPropertyType, isLoading, styles }) => {
     
@@ -32,7 +33,8 @@ const Step1GoalType = ({ goal, setGoal, propertyType, setPropertyType, isLoading
         <View style={styles.inputGroup}>
             <Text style={styles.label}>Property Type</Text>
             <View style={styles.selectorContainer}>
-                {propertyTypeData[goal].map(type => (
+                {/* 🚀 FIX APPLIED: || [] का उपयोग करके map से पहले array की गारंटी दें */}
+                {(propertyTypeData[goal] || []).map(type => ( 
                     <TouchableOpacity 
                         key={type} 
                         style={[

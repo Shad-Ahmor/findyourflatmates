@@ -12,36 +12,35 @@ import {
   ActivityIndicator,
   Modal,
   Dimensions,
-  Alert // Alert is useful for error messages here too
+  Alert
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons'; 
 
 // --- Imported Components and Utils ---
 import ListingFormScreen from '../PublicProperties/PropertyListing/PropertyCreate.web'; 
 import ListingCard from './ListingCard.web'; 
-// handleDeleteListing अब बाहर से आता है और केवल API कॉल करता है।
 import { handleDeleteListing } from './ListingActions'; 
-import { API_BASE_URL } from '@env'; 
+
+// 🛑 FIX 1: API_BASE_URL और MY_LISTINGS_ENDPOINT अब आवश्यक नहीं हैं
+// import { API_BASE_URL } from '@env'; 
+
+// ✅ FIX 2: क्लाइंट-साइड सर्विस फंक्शन को इंपोर्ट करें
+import { fetchUserOwnListingProperties } from '../../../../services/listingService';
 // -------------------------------------
 
 const BREAKPOINT_MOBILE = 500;
-const BREAKPOINT_TABLET = 850; // Main breakpoint for 2-column vs 3-column split
+const BREAKPOINT_TABLET = 850; 
 
 // =================================================================
 // 🚨 CUSTOM HOOK: Dynamic Width Tracking (Browser Resize/Orientation Change)
 // =================================================================
 const useResponsiveWidth = () => {
-    // 1. Initial width set
     const [width, setWidth] = useState(Dimensions.get('window').width);
 
     useEffect(() => {
-        // Function to update state on change
         const updateWidth = () => setWidth(Dimensions.get('window').width);
-        
-        // 2. Add listener for screen dimension changes (browser resize/rotation)
         Dimensions.addEventListener('change', updateWidth);
         
-        // 3. Cleanup function to remove listener when component unmounts
         return () => Dimensions.removeEventListener('change', updateWidth);
     }, []);
 
@@ -63,9 +62,9 @@ const GENEROUS_RADIUS = 20;
 
 
 // -----------------------------------------------------------------
-// 🚨 CONFIGURATION: API Endpoints
+// 🚨 CONFIGURATION: API Endpoints (अब यह केवल Node.js बैकएंड के लिए था, क्लाइंट-साइड में इसकी आवश्यकता नहीं)
 // -----------------------------------------------------------------
-const MY_LISTINGS_ENDPOINT = `${API_BASE_URL}/flatmate/listing/my-listings`; 
+// const MY_LISTINGS_ENDPOINT = `${API_BASE_URL}/flatmate/listing/my-listings`; 
 // -----------------------------------------------------------------
 
 // =================================================================
@@ -84,7 +83,6 @@ const MyListingsScreen = () => {
     
     // ✅ PAGINATION STATE
     const [currentPage, setCurrentPage] = useState(1);
-    // ✅ FIXED: Changed 9 to 4 to ensure pagination shows up with few listings (e.g., 5 listings -> 2 pages)
     const [listingsPerPage] = useState(3); 
 
     // --- Data Fetching ---
@@ -94,37 +92,21 @@ const MyListingsScreen = () => {
         setCurrentPage(1); // Reset to page 1 on fresh fetch
         
         try {
-            const response = await fetch(MY_LISTINGS_ENDPOINT, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', 
-            });
-
-            if (!response.ok) {
-                const responseText = await response.text();
-                // HTTP स्टेटस 401 या 403 को संभालें
-                if (response.status === 401 || response.status === 403) {
-                    Alert.alert("Authentication Required", "Your session has expired or you lack permission. Please log in.");
-                    throw new Error("401: Unauthorized. Session expired.");
-                }
-                // अन्य त्रुटियों को संभालें
-                try {
-                    const errorData = JSON.parse(responseText);
-                    throw new Error(errorData.message || `Failed to fetch listings. Status: ${response.status}`);
-                } catch (parseError) {
-                    throw new Error(`Non-JSON Error response (Status: ${response.status}): ${responseText.substring(0, 100)}...`);
-                }
-            }
+            // 🛑 FIX: Node.js API कॉल को क्लाइंट-साइड सर्विस फ़ंक्शन से बदलें
+            const data = await fetchUserOwnListingProperties(); 
+            // यदि fetchUserOwnListingProperties  सफल होता है, तो यह सीधे listings का array लौटाता है
             
-            const data = await response.json();
             setListings(data); 
 
         } catch (err) {
             console.error("Fetch Error:", err.message);
-            // setError को केवल नेटवर्क/अज्ञात त्रुटियों के लिए सेट करें
-            if (!err.message.includes("401")) {
-                 setError(err.message);
+            
+            // fetchUserOwnListingProperties में, हमने Authentication Error के लिए 'User not authenticated' throw किया था।
+            if (err.message.includes("not authenticated")) {
+                Alert.alert("Authentication Required", "Your session has expired or you lack permission. Please log in.");
             }
+            // अन्य त्रुटियों को संभालें
+            setError(err.message);
         } finally {
             setIsLoading(false);
         }
@@ -153,28 +135,24 @@ const MyListingsScreen = () => {
     };
 
     // =========================================================
-    // ✅ Responsive Grid Logic (MODIFIED for 1-Column Mobile View up to 850px)
+    // ✅ Responsive Grid Logic
     // =========================================================
     let listingWidthStyle = {};
-    // 🛑 NEW VARIABLE: Grid justifyContent (Center or Space-Between)
     let gridJustifyContent = 'space-between'; 
 
     if (dynamicWidth < BREAKPOINT_TABLET) {
-        // मोबाइल/टैबलेट व्यू: 1 कार्ड प्रति पंक्ति (100% चौड़ाई)
         listingWidthStyle = { 
             width: '100%', 
             marginBottom: 25,
             marginRight: 0, 
         }; 
-        // 🛑 KEY CHANGE: 100% चौड़ाई पर, ग्रिड को केंद्र में रखें
         gridJustifyContent = 'center'; 
     } else {
-        // वेब/डेस्कटॉप व्यू: 3 कार्ड प्रति पंक्ति (32% चौड़ाई, space-between के साथ काम करता है)
         listingWidthStyle = { 
             width: '32%', 
             marginBottom: 30 
         };
-        gridJustifyContent = 'space-between'; // Desktop requires space-between
+        gridJustifyContent = 'space-between'; 
     }
     // =========================================================
 
@@ -184,7 +162,6 @@ const MyListingsScreen = () => {
     const indexOfLastListing = currentPage * listingsPerPage;
     const indexOfFirstListing = indexOfLastListing - listingsPerPage;
     
-    // Get the listings for the current page
     const currentListings = listings.slice(indexOfFirstListing, indexOfLastListing);
     
     const totalPages = Math.ceil(listings.length / listingsPerPage);
@@ -192,7 +169,6 @@ const MyListingsScreen = () => {
     const paginate = (pageNumber) => {
         if (pageNumber < 1 || pageNumber > totalPages) return;
         setCurrentPage(pageNumber);
-        // Scroll to the top of the content when changing pages
         if (scrollViewRef.current && scrollViewRef.current.scrollTo) {
              scrollViewRef.current.scrollTo({ y: 0, animated: true });
         }
@@ -202,7 +178,6 @@ const MyListingsScreen = () => {
 
     // Pagination Controls Component
     const PaginationControls = () => {
-        // Condition is now easier to meet with listingsPerPage = 4
         if (totalPages <= 1) return null; 
 
         const pageNumbers = [];
@@ -319,8 +294,8 @@ const MyListingsScreen = () => {
                                         style={listingWidthStyle} // Dynamic Width Applied Here
                                         // State-dependent handler
                                         onEdit={handleEditListing} 
-                                        // API-dependent handler (uses imported function)
-                                        onDelete={(id) => handleDeleteListing(id, API_BASE_URL, handleDeletionSuccess)} 
+                                        // API-dependent handler: handleDeleteListing को अब केवल Firebase DB कॉल करनी चाहिए, API_BASE_URL नहीं
+                                        onDelete={(id) => handleDeleteListing(id, handleDeletionSuccess)} 
                                     />
                                 ))}
                             </View>
@@ -394,7 +369,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#EEE',
         marginBottom: 30,
-        width: '100%', // Use full width of main container
+        width: '100%', 
     },
     statusText: {
         marginTop: 15,
@@ -442,7 +417,6 @@ const styles = StyleSheet.create({
     listingsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        // 🛑 REMOVED: justifyContent:'space-between', // इसे अब डायनेमिक रूप से सेट किया जाएगा
         alignItems: 'stretch', 
         paddingBottom: 25,
         maxWidth:'100%' 

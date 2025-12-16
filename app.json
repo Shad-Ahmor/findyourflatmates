@@ -28,6 +28,13 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "single" 
+    },
+
+
+    "extra": {
+      "expoClient": {
+        "sourceMaps": false
+      }
     }
   }
 }

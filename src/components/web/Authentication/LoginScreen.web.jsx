@@ -17,20 +17,21 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { useAuth } from '../../../context/AuthContext.js';
-// 💡 FIX: Destructure required styles from the theme for easy access
 import { useTheme } from '../../../theme/theme.js'; 
-import { API_BASE_URL } from '@env'; 
-// Recaptcha कंपोनेंट अब इस्तेमाल नहीं हो रहा
+// 🛑 REMOVED: import { API_BASE_URL } from '@env'; 
 
 // 🚀 NEW: Import the extracted SSO Buttons
 import SSOButtons from './sso.web.jsx'; 
-// 💡 NEW: Import reCAPTCHA hook and container component
-import useRecaptcha, { RecaptchaContainer } from './captcha.web.jsx'; 
+// 🛑 REMOVED: Import reCAPTCHA hook and container component (Not needed with Client Sign-in)
+// import useRecaptcha, { RecaptchaContainer } from './captcha.web.jsx'; 
+
+// 🚀 NEW: Import the centralized authentication service
+import { loginUser } from '../../../services/authService'; // 💡 सुनिश्चित करें कि यह path सही है
 
 
 const { width } = Dimensions.get('window');
 const BREAKPOINT = 768; 
-const LOGIN_URL = `${API_BASE_URL}/flatmate/login`; 
+// 🛑 REMOVED: const LOGIN_URL = `${API_BASE_URL}/flatmate/login`; 
 
 
 // 🛡️ SECURITY HELPER 1: Client-Side Sanitization
@@ -59,16 +60,14 @@ const LoginForm = ({
     styles,
     colors, // Pass colors from theme
     SUBTLE_SHADOW, // Pass shadow from theme
-    recaptchaContainerRef, 
-    isRecaptchaReady, // 💡 Prop added to accept readiness state
+    // 🛑 REMOVED: recaptchaContainerRef, isRecaptchaReady 
 }) => (
       <View style={[
         styles.authContainerBase,
         { backgroundColor: colors.card },
-        // Web/Tablet: 50% width, more padding. Mobile: 100% width, appropriate padding.
         isWebOrTablet 
           ? { width: '50%', padding: 50 } 
-          : { paddingHorizontal: 30, width: '100%', paddingVertical: 40 } // Mobile width and padding
+          : { paddingHorizontal: 30, width: '100%', paddingVertical: 40 }
     ]}>
         <Text style={[styles.authHeader, { color: colors.text }]}>Welcome Back</Text>
         
@@ -118,30 +117,21 @@ const LoginForm = ({
             </Text>
         </TouchableOpacity>
 
-        {/* 🤖 RECAPTCHA Component */}
-        <RecaptchaContainer 
-            recaptchaContainerRef={recaptchaContainerRef}
-            styles={styles}
-            colors={colors}
-        />
-        {/* END RECAPTCHA */}
+        {/* 🛑 REMOVED: RECAPTCHA Component */}
 
         <TouchableOpacity 
             onPress={handleLogin} 
             style={[
               styles.actionButton, 
-              // 💡 FIX: Access GENEROUS_RADIUS via styles object
               { backgroundColor: colors.primary, borderRadius: styles.GENEROUS_RADIUS }, 
               SUBTLE_SHADOW,
-              (isLoading || !isRecaptchaReady) && styles.disabledButton
+              isLoading && styles.disabledButton
             ]}
-            disabled={isLoading || !isRecaptchaReady} 
+            // 🛑 CHANGED: Disabled only by isLoading now
+            disabled={isLoading} 
         >
-           {/* Show appropriate indicator/text based on readiness and loading */}
-           {(isLoading || !isRecaptchaReady) ? ( 
-            <Text style={styles.actionButtonText}>
-                {isRecaptchaReady ? 'LOGGING IN...' : 'SECURITY CHECK...'}
-            </Text>
+           {isLoading ? ( 
+            <Text style={styles.actionButtonText}>LOGGING IN...</Text>
            ) : (
                 <Text style={styles.actionButtonText}>LOG IN</Text>
            )}
@@ -171,7 +161,6 @@ const LoginForm = ({
 
 // Login Screen Web
 const LoginScreen = ({ navigation }) => {
-  // 💡 FIX: Destructure all required theme properties
   const { colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW, SUBTLE_SHADOW } = useTheme(); 
   
   const insets = useSafeAreaInsets();
@@ -182,8 +171,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false); 
   
-  // --- 💡 RECAPTCHA HOOK USAGE ---
-  const { recaptchaContainerRef, executeRecaptcha, isRecaptchaReady } = useRecaptcha(); 
+  // 🛑 REMOVED: RECAPTCHA HOOK USAGE
 
   const isWebOrTablet = width > BREAKPOINT; 
 
@@ -201,18 +189,16 @@ const LoginScreen = ({ navigation }) => {
     if (!isValidEmail(sanitizedEmail)) {
         return Alert.alert('Error', 'Please enter a valid email address.');
     }
-    // Optional: Password length check
     if (password.length < 6) { 
         return Alert.alert('Error', 'Password must be at least 6 characters long.');
     }
 
     setIsLoading(true);
 
-    // 💡 Geolocation logic re-added
+    // 💡 Geolocation logic for RTDB update
     let userLocation = { latitude: null, longitude: null };
     if (navigator.geolocation) {
         try {
-            // Geolocation को प्रॉमिस में लपेटें और 5 सेकंड का टाइमआउट दें
             const position = await new Promise((resolve, reject) => {
                 const timeoutId = setTimeout(() => reject(new Error('Geolocation timed out.')), 5000);
                 navigator.geolocation.getCurrentPosition(
@@ -222,7 +208,6 @@ const LoginScreen = ({ navigation }) => {
                     },
                     (err) => { 
                         clearTimeout(timeoutId);
-                        // यदि अनुमति नहीं दी गई है, तो Null मानों के साथ आगे बढ़ें
                         console.warn("Geolocation denied or failed:", err.message);
                         resolve(null); 
                     },
@@ -238,69 +223,49 @@ const LoginScreen = ({ navigation }) => {
             }
         } catch (e) {
             console.warn('Geolocation Error:', e.message);
-            // यदि Geolocation विफल हो जाता है, तो null मानों के साथ आगे बढ़ें
         }
     }
     
-    // 🛡️ -------------------- INVISIBLE RECAPTCHA EXECUTION START -------------------- 🛡️
-    let captchaToken = null;
+    // 🛑 REMOVED: INVISIBLE RECAPTCHA EXECUTION
+
+
     try {
-        // 💡 NEW: Call the execution function from the hook
-        captchaToken = await executeRecaptcha();
+      // 🚀 FUNDAMENTAL CHANGE: Call the centralized service
+      const user = await loginUser(
+        sanitizedEmail, 
+        password, 
+        userLocation.latitude, 
+        userLocation.longitude
+      );
 
-        if (!captchaToken) {
-             throw new Error("reCAPTCHA token generation failed (empty token).");
-        }
-
+      // 3. AuthContext को अपडेट करें
+      await login(user); 
+      
+      // DIRECT NAVIGATION
+      navigation.replace("Main"); 
+      
     } catch (e) {
-        // This catches script loading errors, execution failures, or timeouts
-        setIsLoading(false);
-        console.error('reCAPTCHA Execution Error:', e);
-        
-        // 💡 UPDATED: Time out error handling
-        const errorMessage = e.message.includes('timed out') 
-            ? 'Security check timed out. Please wait a moment and try again.'
-            : e.message.includes('not ready')
-            ? 'Security check not loaded. Please wait and try again.'
-            : 'Could not complete verification. Please refresh and try again.';
-            
-        return Alert.alert('Security Check Failed', errorMessage);
-    }
-    // 🛡️ -------------------- INVISIBLE RECAPTCHA EXECUTION END -------------------- 🛡️
+      console.error('Login Failed:', e);
+      let errorMessage = 'Login failed. Please check your credentials.';
 
-
-    try {
-      const res = await fetch(LOGIN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            email: sanitizedEmail, 
-            password: password, 
-            captchaToken: captchaToken, // 🛡️ SEND THE DYNAMICALLY GENERATED TOKEN
-            latitude: userLocation.latitude,   
-            longitude: userLocation.longitude, 
-        }),
-        credentials: 'include',
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        await login(data.user);
-        // DIRECT NAVIGATION
-        navigation.replace("Main"); 
-      } else {
-        // अगर टोकन वेरिफिकेशन सर्वर पर विफल हो जाता है, तो यह यहाँ विफल हो जाएगा
-        Alert.alert('Login Failed', data.message || 'Invalid credentials or login failed.');
+      // Firebase Error Code Handling (Matches previous backend response)
+      if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid email or password.';
+      } else if (e.code === 'auth/invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      } else if (e.code === 'auth/too-many-requests') {
+        errorMessage = 'Access temporarily blocked due to too many failed attempts.';
+      } else if (e.code === 'auth/network-request-failed') {
+         errorMessage = 'Network error. Please check your connection.';
       }
-    } catch (e) {
-      console.error(e);
-      Alert.alert('Error', 'Network error or unable to reach the server.');
+
+      Alert.alert('Login Failed', errorMessage);
+      
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 💡 FIX: Pass theme properties as a single object to getStyles
   const dynamicStyles = getStyles({ colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW, SUBTLE_SHADOW, BREAKPOINT, width });
 
 
@@ -310,24 +275,20 @@ const LoginScreen = ({ navigation }) => {
         style={dynamicStyles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Centered Scroll View for Web */}
         <ScrollView contentContainerStyle={dynamicStyles.scrollContent}>
 
-          {/* Hero + Form Shadow Card - Applying DEEP_SOFT_SHADOW for the floating 3D effect */}
           <View style={[
             dynamicStyles.webContainer, 
             DEEP_SOFT_SHADOW, 
             { backgroundColor: colors.card, borderRadius: GENEROUS_RADIUS } 
           ]}>
 
-                {/* Hero Section (Left Panel) - Visible for web/tablet view */}
+                {/* Hero Section (Left Panel) */}
                 {isWebOrTablet && (
                   <View style={[
                       dynamicStyles.heroSection, 
-                      // Using a mix of primary and card colors for the vibrant look
                       { backgroundColor: colors.primary, borderRadius: GENEROUS_RADIUS }
                   ]}>
-                      {/* Using the card color for contrast on the primary background */}
                       <Icon name="home-outline" size={90} color={colors.card} /> 
                       <Text style={dynamicStyles.logoText}>FYF</Text> 
                       <Text style={dynamicStyles.tagline}>
@@ -349,9 +310,7 @@ const LoginScreen = ({ navigation }) => {
                     isLoading={isLoading}
                     styles={dynamicStyles} 
                     colors={colors}
-                    SUBTLE_SHADOW={SUBTLE_SHADOW} // Pass the shadow style
-                    recaptchaContainerRef={recaptchaContainerRef} 
-                    isRecaptchaReady={isRecaptchaReady} 
+                    SUBTLE_SHADOW={SUBTLE_SHADOW} 
                 />
             </View>
 
@@ -362,63 +321,57 @@ const LoginScreen = ({ navigation }) => {
 };
 
 
-// 🎨 Theme-based Dynamic Stylesheet
+// 🎨 Theme-based Dynamic Stylesheet (No changes to logic here)
 const getStyles = (theme) => {
-    // Destructure properties from the theme object passed to getStyles
+    // ... (Styles logic remains the same) ...
     const { colors, GENEROUS_RADIUS, DEEP_SOFT_SHADOW, SUBTLE_SHADOW, BREAKPOINT, width } = theme;
 
-    // 🌟 HOVER EFFECT MIXIN (To match LandingScreen's 3D feel on buttons)
     const hoverScaleEffect = {
         transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         ':hover': {
-            transform: [{ scale: 1.03 }], // Slightly lifts the button
-            // Use a slight shadow based on the text color for depth
+            transform: [{ scale: 1.03 }], 
             boxShadow: `0 10px 20px 0px ${colors.text}25`, 
         },
     };
 
     return StyleSheet.create({
-        // ... (Existing Global/Container Styles) ...
+        // ... (Styles remain the same, including cleanup of unused recaptcha styles if desired) ...
         safeArea: { flex: 1, backgroundColor: colors.background },
         keyboardView: { flex: 1 },
-        // Ensure content is centered for the large web view
         scrollContent: { 
             flexGrow: 1, 
             justifyContent: 'center', 
             alignItems: 'center', 
             margin:'10px',
             paddingVertical: 40,
-            paddingHorizontal: width > BREAKPOINT ? 20 : 0, // Add horizontal padding for mobile view safety
+            paddingHorizontal: width > BREAKPOINT ? 20 : 0, 
         },
 
         webContainer: { 
             flexDirection: 'row', 
             width: '100%', 
-            // Max width set to 1000px for a contained, centered web experience
             maxWidth: width > BREAKPOINT ? 1000 : '100%', 
             backgroundColor: colors.card, 
             borderRadius: GENEROUS_RADIUS, 
             overflow: 'hidden',
         },
   
-        // ... (Existing Hero Section Styles) ...
         heroSection: { 
             width: '50%', 
             backgroundColor: colors.primary, 
             padding: 50, 
             justifyContent: 'center', 
             alignItems: 'center',
-            // Ensure the Hero has the rounded corner treatment
             borderTopLeftRadius: GENEROUS_RADIUS,
             borderBottomLeftRadius: GENEROUS_RADIUS,
         },
         logoText: { 
             fontSize: 40, 
-            fontWeight: '900', // BOLDNESS INCREASED
+            fontWeight: '900', 
             color: colors.card, 
             textAlign: 'center', 
             marginTop: 20, 
-            letterSpacing: 1, // Increased spacing for prominence
+            letterSpacing: 1, 
         },
         tagline: { 
             fontSize: 18, 
@@ -426,9 +379,8 @@ const getStyles = (theme) => {
             textAlign: 'center', 
             marginTop: 20,
             lineHeight: 25,
-            fontWeight: '600', // Increased weight
+            fontWeight: '600', 
         },
-
    
         authContainerBase: { 
             paddingTop: 20, 
@@ -436,8 +388,8 @@ const getStyles = (theme) => {
             width: '100%' 
         },
         authHeader: { 
-            fontSize: width > BREAKPOINT ? 36 : 28, // 💡 FIX: Responsive font size
-            fontWeight: '900', // Increased to max bold for the 'magical' look
+            fontSize: width > BREAKPOINT ? 36 : 28, 
+            fontWeight: '900', 
             color: colors.text, 
             marginBottom: 40, 
             textAlign: 'left',
@@ -446,38 +398,27 @@ const getStyles = (theme) => {
 
         inputGroup: { marginBottom: 25 }, 
         label: { 
-            fontSize: width > BREAKPOINT ? 16 : 15, // Slightly responsive label
+            fontSize: width > BREAKPOINT ? 16 : 15, 
             marginBottom: 8, 
-            fontWeight: '700' // Bolder label
+            fontWeight: '700' 
         },
         input: { 
-            borderRadius: 15, // More rounded corners
-            height: 60, // Taller input field
-            paddingHorizontal: 20, // More internal padding
-            fontSize: 18, // Larger text input
-            borderWidth: 2, // Thicker border for prominence
-            // 💡 Hover/Focus Effect (Web-only)
+            borderRadius: 15, 
+            height: 60, 
+            paddingHorizontal: 20, 
+            fontSize: 18, 
+            borderWidth: 2, 
             transition: 'border-color 0.2s',
             ':focus': {
-                borderColor: colors.primary, // Primary color highlight on focus
-                outline: 'none', // Remove default browser outline
+                borderColor: colors.primary, 
+                outline: 'none', 
             }
         },
 
-        // 🤖 RECAPTCHA Styles
-        recaptchaContainer: {
-            marginVertical: 15,
-            alignItems: 'center', 
-        },
-        recaptchaBadgeText: {
-            fontSize: 12,
-            color: colors.textSecondary,
-            textAlign: 'center',
-            lineHeight: 18,
-            marginTop: 10, 
-        },
+        // 🛑 CLEANUP: RECAPTCHA Styles removed
+        // recaptchaContainer: { ... }
+        // recaptchaBadgeText: { ... }
 
-        // ... (Existing Button Styles) ...
         forgotPasswordContainer: {
             marginBottom: 25,
             marginTop: -10,
@@ -485,20 +426,20 @@ const getStyles = (theme) => {
         forgotPasswordText: { 
             textAlign: 'right', 
             fontSize: 15, 
-            fontWeight: '800' // Bolder
+            fontWeight: '800' 
         },
         actionButton: { 
             paddingVertical: 18, 
             alignItems: 'center', 
             borderRadius:'20px',
             marginTop: 10,
-            ...hoverScaleEffect, // Applying the 3D hover effect
+            ...hoverScaleEffect, 
         },
         actionButtonText: { 
             color: colors.card, 
             fontSize: 18, 
             fontWeight: '900',
-            letterSpacing: 1.5, // Increased letter spacing
+            letterSpacing: 1.5, 
         },
         disabledButton: { opacity: 0.6 },
   
@@ -506,34 +447,33 @@ const getStyles = (theme) => {
         switchButtonText: { 
             textAlign: 'center', 
             fontSize: 15, 
-            fontWeight: '600' // Bolder
+            fontWeight: '600' 
         },
         switchButtonHighlight: {
             fontWeight: '900', 
         },
 
-        // ... (SSO Styles) ...
         mobileAuthButtons: { marginTop: 30, marginBottom: 10 },
         orSeparator: { 
             textAlign: 'center', 
             marginVertical: 25,
-            fontSize: 13, // Slightly larger
-            fontWeight: '900', // Max bold
-            letterSpacing: 2, // Increased spacing
+            fontSize: 13, 
+            fontWeight: '900', 
+            letterSpacing: 2, 
         },
         socialButton: { 
             flexDirection: 'row', 
             justifyContent: 'center', 
             alignItems: 'center', 
-            borderRadius: 15, // More rounded
+            borderRadius: 15, 
             paddingVertical: 14, 
-            marginTop: 15, // More margin
-            borderWidth: 1.5, // Slightly thicker border
-            ...hoverScaleEffect, // Applying the 3D hover effect
+            marginTop: 15, 
+            borderWidth: 1.5, 
+            ...hoverScaleEffect, 
         },
         socialButtonText: { 
             fontSize: 16, 
-            fontWeight: '700', // Bolder
+            fontWeight: '700', 
             marginLeft: 10 
         },
     });

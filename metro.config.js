@@ -14,4 +14,10 @@ config.resolver.extraNodeModules = {
 config.resolver.assetExts.push('json');
 config.resolver.sourceExts.push('mjs');
 
+// 🔐 Hardening (safe)
+config.transformer.minifierConfig = {
+  keep_classnames: false,
+  keep_fnames: false,
+};
+
 module.exports = config;

@@ -31,7 +31,7 @@ import PropertyDetailedInfo from './PropertyDetailedInfo'; // NEW: Section 5
 import PropertyFooterDetails from './PropertyFooterDetails';
 // --- IMPORT MODALS ---
 import { NegotiationModalComponent, ReviewModalComponent } from './PropertyModals'; // NEW: Modals
-
+import {fetchSingleListingClient} from '../../../../../services/listingService'
 // --- IMPORT UTILITIES ---
 import { 
     getWebShadow, 
@@ -39,7 +39,7 @@ import {
     SUBTLE_SHADOW // Added SUBTLE_SHADOW for use in getDynamicStyles
 } from './DetailUtilityComponents'; 
 // -------------------------------------
-
+import { useAuth } from '../../../../../context/AuthContext';
 
 // =================================================================
 // 🚨 RESPONSIVE CONFIGURATION & CONSTANTS
@@ -116,10 +116,10 @@ const formatTimestamp = (timestamp) => {
 const PropertyDetailScreen = ({ route, navigation }) => { 
     const { colors } = useTheme(); 
     const { propertyId, chatName } = route.params || {}; 
-    
+    const { user, isLoading: isAuthLoading } = useAuth(); // 'user' अब परिभाषित है
     // --- MAIN STATE ---
     const [property, setProperty] = useState(null); 
-    const [isLoading, setIsLoading] = useState(true);
+    const [isPropertyLoading, setIsPropertyLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0); 
     
@@ -150,49 +150,58 @@ const PropertyDetailScreen = ({ route, navigation }) => {
     const imageHeight = (itemWidth * imageAspectRatio) / 1.5;
     // =================================================================
     
-    
     // --- DATA FETCHING ---
-    const fetchPropertyDetails = useCallback(async (id) => {
+const fetchPropertyDetails = useCallback(async (id) => {
+        
+        // 🚀 IMPROVEMENT 1: Fetching तभी शुरू करें जब Auth Loading पूरा हो जाए
+        if (isAuthLoading) {
+            console.warn("Authentication is still loading, skipping fetch.");
+            return; 
+        }
+
+        // 💡 IMPROVEMENT 2: यदि Auth Loading पूरा हो गया है, और user null है (लॉग इन नहीं है)
+        if (!user) {
+            console.warn("User not authenticated for fetching single listing.");
+            setError("Authentication required to view or edit this listing.");
+            setIsPropertyLoading(false);
+            return; 
+        }
+
         if (!id) {
             setError("Property ID is missing. Cannot fetch details.");
-            setIsLoading(false);
+            setIsPropertyLoading(false);
             return;
         }
 
-        setIsLoading(true);
+        setIsPropertyLoading(true);
         setError(null);
+        
         try {
-            // Placeholder: Assume API_BASE_URL is configured
-            const response = await fetch(`${SINGLE_LISTING_ENDPOINT}/${id}`); 
+            // 🛑 NOTE: Assuming fetchSingleListingClient's Backend is now tolerant of "Pending Review" status, 
+            // or the single-fetch API does not enforce strict status checks for authenticated users.
+            // 🚀 NEW SECURE CALL: user को पास किया गया
+            const data = await fetchSingleListingClient(id, user); 
             
-            if (!response.ok) {
-                 let errorData;
-                 try {
-                     errorData = await response.json();
-                 } catch (e) {
-                     errorData = { message: `Server error, status: ${response.status}` };
-                 }
-                 
-                 if (response.status === 404) {
-                     throw new Error("Listing not found. Please verify the property ID.");
-                 }
-                 
-                 throw new Error(errorData.message || `Failed to fetch property details: ${response.status}`);
-            }
-            
-            const data = await response.json();
             setProperty(data);
             
         } catch (err) {
             console.error("Fetch Property Details Error:", err);
-            setError(err.message || "Failed to load listing details from server.");
+            setError(err.message || "Failed to load listing details from service.");
+            
         } finally {
-            setIsLoading(false);
+            setIsPropertyLoading(false);
         }
-    }, []); 
-    
-    useEffect(() => {
-        fetchPropertyDetails(propertyId);
+        
+    // 💡 DEPENDENCY FIX: 'user' और 'isAuthLoading' दोनों को शामिल करें
+    }, [user, isAuthLoading]);
+
+  useEffect(() => {
+        // 🚀 IMPROVEMENT 3: Fetching तभी शुरू करें जब propertyId उपलब्ध हो
+        // और Auth Loading पूरा हो गया हो, ताकि fetchPropertyDetails को सही 'user' मिले।
+        if (propertyId && !isAuthLoading) {
+            fetchPropertyDetails(propertyId);
+        }
+        
         if (chatName) {
             navigation.setOptions({ 
                 title: chatName,
@@ -200,8 +209,9 @@ const PropertyDetailScreen = ({ route, navigation }) => {
                 headerTintColor: colors.headerText,
             });
         }
-    }, [propertyId, chatName, navigation, fetchPropertyDetails, colors.headerBackground, colors.headerText]);
-
+        
+    // 💡 DEPENDENCY FIX: 'isAuthLoading' को dependencies में जोड़ें
+    }, [propertyId, chatName, navigation, fetchPropertyDetails, colors.headerBackground, colors.headerText, isAuthLoading]);
     // --- CAROUSEL AUTO-SCROLL LOGIC ---
     useEffect(() => {
         if (!property?.imageLinks || property.imageLinks.length <= 1) {
@@ -257,7 +267,7 @@ setActiveImageIndex(prevIndex => (prevIndex + 1) % property.imageLinks.length);
 
 
     // --- CONDITIONAL RENDERING (Loading/Error State) ---
-    if (isLoading) {
+    if (isPropertyLoading) {
         return (
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
                 <View style={dynamicStyles.loadingContainer}>

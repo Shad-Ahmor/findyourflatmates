@@ -6,6 +6,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../theme/theme';
 import { useAuth } from '../../../context/AuthContext';
+// 🚀 NEW: authService से client-side logout फ़ंक्शन इंपोर्ट करें
+import { logoutUser } from '../../../services/authService'; 
 
 // --- CONSTANTS & RESPONSIVENESS ---
 const { width } = Dimensions.get('window');
@@ -23,14 +25,11 @@ const GLASS_STYLE = Platform.select({
 
 // =================================================================
 // 🚀 WebAppHeader (The actual Header Component)
-// 🚨 MODIFIED: अब activeScreenName और allowedScreenNames prop स्वीकार करता है
-// 🔥 FIX: Add 'export' keyword for named export
 // =================================================================
-// 🛑 KEY CHANGE 1: Prop signature में allowedScreenNames को जोड़ें
 export const WebAppHeader = ({ activeScreenName, allowedScreenNames }) => {
   const navigation = useNavigation();
   const { colors, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout } = useAuth(); // Auth context cleaner
   
   // 💡 NEW STATE: मोबाइल मेनू को नियंत्रित करने के लिए
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,7 +49,6 @@ export const WebAppHeader = ({ activeScreenName, allowedScreenNames }) => {
   ];
   
   // 🛑 KEY CHANGE 2: Master List को allowedScreenNames के आधार पर फ़िल्टर करें
-  // यह सुनिश्चित करता है कि केवल अनुमत लिंक्स ही Header में दिखाई दें।
   const screens = masterScreens.filter(screen => 
     !allowedScreenNames || allowedScreenNames.includes(screen.name)
   );
@@ -59,18 +57,21 @@ export const WebAppHeader = ({ activeScreenName, allowedScreenNames }) => {
   const hS = getHeaderStyles(colors, isWebOrTablet);
 
   // ===========================
-  // 🔥 LOGOUT API CALL
+  // 🔥 LOGOUT API CALL (MODIFIED)
   // ===========================
   const handleLogout = async () => {
     try {
-      await fetch("/api/flatmate/logout", { 
-        method: "POST",
-        credentials: "include"
-      });
+      // 🛑 REMOVED: Backend fetch call: 
+      // await fetch("/api/flatmate/logout", { method: "POST", credentials: "include" });
+
+      // 🚀 NEW: Call the centralized Firebase Client SDK logout function
+      await logoutUser(); 
 
       logout(); // Remove auth context data
-      // 💡 FIX: Home पर नेविगेट करें और internal screen parameter को हटा दें
+      
+      // 💡 FIX: Home पर नेविगेट करें
       navigation.navigate("Main", { screen: undefined }); 
+      
     } catch (err) {
       console.log("Logout Error:", err);
       // Fallback logout for client-side state
@@ -86,8 +87,6 @@ export const WebAppHeader = ({ activeScreenName, allowedScreenNames }) => {
 
   // 💡 HELPER: नेविगेट करें और मेनू बंद करें
   const navigateAndCloseMenu = (screenName) => {
-      // 🚨 FIX: Main route पर navigate करें और internal screen name को param के रूप में पास करें
-      // Linking config के कारण यह URL को /Property/ScreenName में बदल देगा।
       navigation.navigate('Main', { screen: screenName === 'Main' ? undefined : screenName }); 
       setIsMenuOpen(false); // मेनू बंद करें
   }
@@ -263,14 +262,12 @@ export const WebAppHeader = ({ activeScreenName, allowedScreenNames }) => {
 
 // ================================
 // MAIN SCREEN WRAPPER (WebHeader / WebMainScreen)
-// 🚨 MODIFIED: अब screensMap prop स्वीकार करता है और डायनामिक रूप से कंटेंट रेंडर करता है
 // ================================
 const WebHeader = ({ navigation, route, screensMap }) => {
   const { colors } = useTheme();
   const mS = getMainStyles(colors);
 
   // 1. Determine the currently requested internal screen from route params
-  // Default to 'Main' (which maps to HomeScreen in AUTH_SCREENS_MAP)
   const currentInternalScreenName = route.params?.screen || 'Main';
   
   // 2. Get the Component from the map
@@ -318,11 +315,9 @@ const WebHeader = ({ navigation, route, screensMap }) => {
 
 
 // ==================================================
-// 🌈 STYLES (Dynamic/Responsive)
-// ... (STYLES REMAIN UNCHANGED FROM YOUR SNIPPET) ...
+// 🌈 STYLES (Dynamic/Responsive) (No Change)
 // ==================================================
 const getHeaderStyles = (colors, isWebOrTablet) => {
-    // Dynamic values
     const PADDING_H = isWebOrTablet ? 22 : 16;
     const PADDING_V = isWebOrTablet ? 14 : 10;
     const LOGO_SIZE = isWebOrTablet ? 30 : 24;
@@ -330,15 +325,14 @@ const getHeaderStyles = (colors, isWebOrTablet) => {
     const NAV_GAP = isWebOrTablet ? 14 : 8;
     const HEADER_MARGIN = isWebOrTablet ? 20 : 0; 
     const BORDER_RADIUS = isWebOrTablet ? 24 : 0; 
-    const MOBILE_GAP = 12; // New constant for spacing between Menu icon and Logo
+    const MOBILE_GAP = 12;
 
     return StyleSheet.create({
         headerContainer: {
           flexDirection: "row",
           alignItems: "center",
-          // 💡 FIX: Web में space-between, Mobile में flex-start और gap का उपयोग
           justifyContent: isWebOrTablet ? "space-between" : "flex-start", 
-          gap: isWebOrTablet ? 0 : MOBILE_GAP, // Mobile में gap जोड़ें
+          gap: isWebOrTablet ? 0 : MOBILE_GAP, 
           paddingVertical: PADDING_V,
           paddingHorizontal: PADDING_H,
           borderRadius: BORDER_RADIUS,
@@ -353,33 +347,24 @@ const getHeaderStyles = (colors, isWebOrTablet) => {
           borderBottomWidth: isWebOrTablet ? 0 : 1, 
           borderColor: colors.border,
         },
-
-        // 💡 NEW CONTAINER: Mobile में Menu और Logo को एक साथ ग्रुप करने के लिए
         leftContainer: {
             flexDirection: 'row',
             alignItems: 'center',
             gap: MOBILE_GAP,
-            // Web में, यह middle nav और right buttons से अलग हो जाएगा (implicit space-between)
-            // Mobile में, यह right buttons से अलग हो जाएगा (implicit space-between)
-            flex: isWebOrTablet ? 0 : 1, // Mobile में flex 1 ताकि rightButtons right में चला जाए
+            flex: isWebOrTablet ? 0 : 1, 
         },
-
         logoText: {
           fontSize: LOGO_SIZE,
           fontWeight: "900",
           letterSpacing: 0.5,
         },
-
-        // --- MIDDLE NAV (Web/Tablet Only) ---
         navButtons: {
           flexDirection: "row",
           alignItems: "center",
           gap: NAV_GAP,
-          // 💡 FIX: Web में middle nav को center में रखने के लिए flex-grow
           flexGrow: 1, 
           justifyContent: 'center',
         },
-
         navButton: {
           flexDirection: "row",
           alignItems: "center",
@@ -391,21 +376,16 @@ const getHeaderStyles = (colors, isWebOrTablet) => {
           transitionDuration: "0.3s",
           ...Platform.select({ web: { cursor: "pointer", ':hover': { transform: 'scale(1.07)' } } }),
         },
-
         navButtonText: {
           fontSize: isWebOrTablet ? 15 : 14,
           fontWeight: "700",
         },
-
-        // --- RIGHT BUTTONS ---
         rightButtons: {
           flexDirection: "row",
           alignItems: "center",
           gap: NAV_GAP,
-          // 💡 FIX: Mobile में right buttons को राइट साइड में अलाइन करने के लिए
           marginLeft: 'auto', 
         },
-
         circleButton: {
           width: BUTTON_SIZE,
           height: BUTTON_SIZE,
@@ -418,11 +398,9 @@ const getHeaderStyles = (colors, isWebOrTablet) => {
           shadowRadius: 3,
           elevation: 3,
         },
-        
-        // --- 💡 NEW MOBILE MENU STYLES ---
         mobileMenuContainer: {
             position: 'absolute',
-            top: 60, // Header height के नीचे शुरू करें (approx.)
+            top: 60, 
             left: 0,
             right: 0,
             zIndex: 90, 
@@ -439,19 +417,17 @@ const getHeaderStyles = (colors, isWebOrTablet) => {
             flexDirection: 'row',
             alignItems: 'center',
             paddingVertical: 15,
-            // Border is added inline in the render loop
         },
         mobileMenuButtonText: {
             fontSize: 16,
             fontWeight: '600',
         },
-        // --- END NEW MOBILE MENU STYLES ---
   });
 };
 
 
 // ================================
-// MAIN WRAPPER STYLES
+// MAIN WRAPPER STYLES (No Change)
 // ================================
 const getMainStyles = (colors) =>
   StyleSheet.create({
