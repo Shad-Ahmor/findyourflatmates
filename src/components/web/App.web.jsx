@@ -211,10 +211,14 @@ function RootStack() {
 // ======================================================
 export default function WebApp() {
   if (Platform.OS === 'web') {
-    const { pathname, hash } = window.location;
+    const { pathname, hash, search } = window.location;
 
+    // ✅ Agar URL me # already hai, redirect mat karo
+    // ✅ Agar path / ya empty hai, redirect mat karo
     if (!hash && pathname !== '/' && pathname !== '') {
-      window.location.replace(`/#${pathname}`);
+      // Preserve query string
+      const query = search || '';
+      window.location.replace(`/#${pathname}${query}`);
       return null;
     }
   }
