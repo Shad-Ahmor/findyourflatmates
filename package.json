@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "expo start",
+    "start": "APP_ENV=local PLATFORM=web expo start",
+    "start:dev": "APP_ENV=development PLATFORM=web expo start",
+    "start:prod": "APP_ENV=production PLATFORM=web expo start",
+
+    "web": "PLATFORM=web expo start --web",
+
+    "build:web": "APP_ENV=production PLATFORM=web expo export --platform web && node copyRedirects.js",
     "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "build:web": "expo export --platform web && node copyRedirects.js"
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@babel/preset-flow": "^7.27.1",
